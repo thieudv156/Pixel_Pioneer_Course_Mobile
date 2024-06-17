@@ -41,7 +41,6 @@ class _CourseListScreenState extends State<CourseListScreen> {
           _isLoading = false;
         });
       } else {
-        // Handle error
         log('Failed to load courses. Status code: ${response.statusCode}');
         setState(() {
           courses = [];
@@ -49,7 +48,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
         });
       }
     } catch (e) {
-      print('Error fetching courses: $e');
+      log('Error fetching courses: $e');
       setState(() {
         courses = [];
         _isLoading = false;
@@ -62,7 +61,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.category.name} Courses'),
-        backgroundColor: Colors.purple[100],
+        backgroundColor: Color.fromARGB(255, 196, 255, 114),
         elevation: 0,
       ),
       body: _isLoading
@@ -93,24 +92,17 @@ class _CourseListScreenState extends State<CourseListScreen> {
                         course.title,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Instructor: ${course.instructorName}"),
-                          Text('Price: \$${course.price.toStringAsFixed(2)}'),
-                        ],
-                      ),
+                      subtitle: Text("Instructor: ${course.instructorName}"),
                       trailing: const Icon(
                         Icons.arrow_right_alt_rounded,
                         color: Colors.green,
                       ),
                       onTap: () {
-                        // Handle course card tap
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                CourseDetailsScreen(courseName: course.title),
+                                CourseDetailsScreen(course: course),
                           ),
                         );
                       },

@@ -1,9 +1,66 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:course_template/models/course.dart';
 
-class CourseDetailsScreen extends StatelessWidget {
-  final String courseName;
+class CourseDetailsScreen extends StatefulWidget {
+  final Course course;
 
-  const CourseDetailsScreen({Key? key, required this.courseName}) : super(key: key);
+  const CourseDetailsScreen({Key? key, required this.course}) : super(key: key);
+
+  @override
+  _CourseDetailsScreenState createState() => _CourseDetailsScreenState();
+}
+
+class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
+  bool isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfFavorite();
+  }
+
+  Future<void> _checkIfFavorite() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> favoriteCourseJsonList =
+        prefs.getStringList('favoriteCourses') ?? [];
+    setState(() {
+      isFavorite = favoriteCourseJsonList.any((courseJson) {
+        var storedCourse = jsonDecode(courseJson);
+        return storedCourse['title'] == widget.course.title;
+      });
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> favoriteCourseJsonList =
+        prefs.getStringList('favoriteCourses') ?? [];
+
+    if (isFavorite) {
+      favoriteCourseJsonList.removeWhere((courseJson) {
+        var storedCourse = jsonDecode(courseJson);
+        return storedCourse['title'] == widget.course.title;
+      });
+    } else {
+      var courseMap = {
+        'title': widget.course.title,
+        'instructorName': widget.course.instructorName,
+        'imageUrl': widget.course.imageUrl,
+        'price': widget.course.price,
+      };
+      favoriteCourseJsonList.add(jsonEncode(courseMap));
+    }
+
+    await prefs.setStringList('favoriteCourses', favoriteCourseJsonList);
+
+    setState(() {
+      isFavorite = !isFavorite;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +73,11 @@ class CourseDetailsScreen extends StatelessWidget {
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {},
+            icon: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? Colors.red : null,
+            ),
+            onPressed: _toggleFavorite,
           ),
         ],
       ),
@@ -37,15 +97,15 @@ class CourseDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            courseName,
+            widget.course.title,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '\$250',
+          Text(
+            '\$${widget.course.price.toString()}',
             style: TextStyle(
               fontSize: 24,
               color: Colors.purple,
@@ -61,11 +121,11 @@ class CourseDetailsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const ListTile(
+          ListTile(
             leading: CircleAvatar(
               backgroundImage: AssetImage('assets/profile.jpg'),
             ),
-            title: Text('Huberta Raj'),
+            title: Text(widget.course.instructorName),
             subtitle: Text('Senior UI - UX Designer'),
           ),
           const Divider(),
@@ -116,7 +176,7 @@ class CourseDetailsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const ListTile(
+          ListTile(
             leading: CircleAvatar(
               backgroundImage: AssetImage('assets/profile.jpg'),
             ),
@@ -126,7 +186,7 @@ class CourseDetailsScreen extends StatelessWidget {
             ),
             trailing: Text('4.5'),
           ),
-          const ListTile(
+          ListTile(
             leading: CircleAvatar(
               backgroundImage: AssetImage('assets/profile.jpg'),
             ),
@@ -138,10 +198,6 @@ class CourseDetailsScreen extends StatelessWidget {
           ),
           const Divider(),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text('Enroll Course - \$250'),
-          ),
         ],
       ),
     );

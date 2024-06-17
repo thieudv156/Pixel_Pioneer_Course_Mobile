@@ -68,7 +68,8 @@ class _LoginScreenState extends State<LoginScreen> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Login Failed'),
-            content: Text(response.body),
+            content: const Text(
+                "Account may not exist, or you have entered wrong information."),
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),

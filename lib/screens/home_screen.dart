@@ -1,6 +1,5 @@
 import 'package:course_template/models/userinformation.dart';
-import 'package:course_template/screens/my_courses_screen.dart';
-import 'package:course_template/screens/search_results.dart';
+import 'package:course_template/screens/course_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -12,11 +11,9 @@ import 'package:course_template/models/course.dart';
 import 'package:course_template/screens/category_list_screen.dart';
 import 'package:course_template/screens/chat_screen.dart';
 import 'package:course_template/screens/course_details_screen.dart';
-import 'package:course_template/screens/course_selection_screen.dart';
 import 'package:course_template/screens/profile_screen.dart';
+import 'package:course_template/screens/search_results.dart';
 import 'package:course_template/widgets/course_chip.dart';
-import 'package:course_template/widgets/custom_button.dart';
-import 'package:course_template/widgets/custom_text_field.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -285,7 +282,7 @@ class _HomePageState extends State<HomePage> {
                   top: 48,
                   child: Container(
                     color: Colors.white,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
                 ),
             ],
@@ -341,9 +338,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCourseCard(
     BuildContext context, {
-    required String title,
-    required String author,
-    required String image,
+    required Course course,
   }) {
     final screenSize = MediaQuery.of(context).size;
     return GestureDetector(
@@ -351,7 +346,8 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => CourseDetailsScreen(courseName: title)),
+            builder: (context) => CourseDetailsScreen(course: course),
+          ),
         );
       },
       child: Card(
@@ -370,7 +366,7 @@ class _HomePageState extends State<HomePage> {
                   topRight: Radius.circular(12),
                 ),
                 child: Image.network(
-                  image,
+                  course.imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return const Center(child: Text('Image not available'));
@@ -384,12 +380,12 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    course.title,
                     style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    author,
+                    course.instructorName,
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
@@ -508,9 +504,7 @@ class _HomePageState extends State<HomePage> {
         children: selectedCourses.map((course) {
           return _buildCourseCard(
             context,
-            title: course.title,
-            author: course.instructorName,
-            image: course.imageUrl,
+            course: course,
           );
         }).toList(),
       ),

@@ -1,16 +1,33 @@
-import 'package:course_template/screens/add_new_card_screen.dart';
 import 'package:course_template/screens/change_password_screen.dart';
+import 'package:course_template/screens/favorite_course_screen.dart';
 import 'package:course_template/screens/my_courses_screen.dart';
 import 'package:course_template/screens/payment_details_screen.dart';
-import 'package:course_template/screens/payment_screen.dart';
-import 'package:course_template/screens/select_credit_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'my_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _userFullname = 'User';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserFullname();
+  }
+
+  Future<void> _loadUserFullname() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userFullname = prefs.getString("userFullname") ?? 'User';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +46,9 @@ class ProfileScreen extends StatelessWidget {
                 backgroundImage: AssetImage('assets/profile.jpg'),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Rajendra Raha',
-                style: TextStyle(
+              Text(
+                _userFullname,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -51,7 +68,6 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.library_books,
                 text: 'My Courses',
                 onTap: () {
-                  // Navigate to My Courses screen
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -63,7 +79,6 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.payment,
                 text: 'My Payment',
                 onTap: () {
-                  // Navigate to My Payment screen
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -73,16 +88,19 @@ class ProfileScreen extends StatelessWidget {
               ),
               ProfileOption(
                 icon: Icons.favorite,
-                text: 'My Wishlist',
+                text: 'My Favorite Courses',
                 onTap: () {
-                  // Navigate to My Wishlist screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const FavoriteCoursesScreen()),
+                  );
                 },
               ),
               ProfileOption(
                 icon: Icons.lock,
                 text: 'Change Password',
                 onTap: () {
-                  // Navigate to Change Password screen
                   Navigator.push(
                     context,
                     MaterialPageRoute(
