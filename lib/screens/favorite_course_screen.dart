@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:course_template/models/course.dart';
@@ -13,6 +14,8 @@ class FavoriteCoursesScreen extends StatefulWidget {
 
 class _FavoriteCoursesScreenState extends State<FavoriteCoursesScreen> {
   List<Course> favoriteCourses = [];
+  List<String> instructorNames = [];
+  List<String> imageUrls = [];
 
   @override
   void initState() {
@@ -25,24 +28,33 @@ class _FavoriteCoursesScreenState extends State<FavoriteCoursesScreen> {
     List<String> favoriteCourseJsonList =
         prefs.getStringList('favoriteCourses') ?? [];
 
-    List<Course> courses = favoriteCourseJsonList.map((courseJson) {
+    List<Course> courses = [];
+    List<String> instructors = [];
+    List<String> images = [];
+
+    for (var courseJson in favoriteCourseJsonList) {
       var courseMap = jsonDecode(courseJson);
-      return Course.fromJson(courseMap);
-    }).toList();
+      log(courseMap['instructorName'].toString());
+      courses.add(Course.fromJson(courseMap));
+      instructors.add(courseMap['instructorName']);
+      images.add(courseMap['imageUrl']);
+    }
 
     setState(() {
       favoriteCourses = courses;
+      instructorNames = instructors;
+      imageUrls = images;
     });
   }
 
-  Future<void> _removeFromFavorites(String courseTitle) async {
+  Future<void> _removeFromFavorites(int courseId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> favoriteCourseJsonList =
         prefs.getStringList('favoriteCourses') ?? [];
 
     favoriteCourseJsonList.removeWhere((courseJson) {
       var courseMap = jsonDecode(courseJson);
-      return courseMap['title'] == courseTitle;
+      return courseMap['id'] == courseId;
     });
 
     await prefs.setStringList('favoriteCourses', favoriteCourseJsonList);
@@ -66,6 +78,8 @@ class _FavoriteCoursesScreenState extends State<FavoriteCoursesScreen> {
               itemCount: favoriteCourses.length,
               itemBuilder: (context, index) {
                 final course = favoriteCourses[index];
+                final instructorName = instructorNames[index];
+                final imageUrl = imageUrls[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -76,7 +90,7 @@ class _FavoriteCoursesScreenState extends State<FavoriteCoursesScreen> {
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
-                        course.imageUrl,
+                        imageUrl,
                         height: 56,
                         width: 56,
                         fit: BoxFit.cover,
@@ -86,10 +100,10 @@ class _FavoriteCoursesScreenState extends State<FavoriteCoursesScreen> {
                       course.title,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text("Instructor: ${course.instructorName}"),
+                    subtitle: Text("Instructor: $instructorName"),
                     trailing: IconButton(
                       icon: const Icon(Icons.favorite, color: Colors.red),
-                      onPressed: () => _removeFromFavorites(course.title),
+                      onPressed: () => _removeFromFavorites(course.id),
                     ),
                     onTap: () {
                       Navigator.push(

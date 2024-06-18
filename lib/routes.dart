@@ -13,7 +13,7 @@ import 'package:course_template/screens/my_courses_screen.dart';
 import 'package:course_template/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'widgets/splash_screen.dart';
-import 'models/course.dart';
+import 'models/course.dart' as course_models;
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -36,7 +36,7 @@ class Routes {
                   mentorName: '',
                 ));
       case '/course-details':
-        final course = settings.arguments as Course;
+        final course = settings.arguments as course_models.Course;
         return MaterialPageRoute(
           builder: (_) => CourseDetailsScreen(course: course),
         );

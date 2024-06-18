@@ -15,11 +15,11 @@ class UserInformation {
 
   factory UserInformation.fromJson(Map<String, dynamic> json) {
     return UserInformation(
-      id: json['id'],
-      fullName: json['fullName'],
-      email: json['email'],
-      username: json['username'],
-      roles: List<String>.from(json['roles']),
+      id: json['id'] ?? 0,
+      fullName: json['fullName'] ?? '',
+      email: json['email'] ?? '',
+      username: json['username'] ?? '',
+      roles: List<String>.from(json['authorities'] ?? []),
     );
   }
 
