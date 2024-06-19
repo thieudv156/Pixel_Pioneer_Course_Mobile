@@ -24,9 +24,7 @@ class Review {
       createdAt:
           DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       rating: json['rating'] ?? 0,
-      courseId: json['course'] is Map
-          ? json['course']['id']
-          : json['course'] ?? 0, // Check if course is a map or an int
+      courseId: json['course']['id'] ?? 0, // Only get courseId
       user: UserInformation.fromJson(json['user'] ?? {}),
     );
   }

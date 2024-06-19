@@ -35,21 +35,29 @@ class Course {
     return Course(
       id: json['id'] ?? 0,
       title: json['title'] ?? '',
-      category: Category.fromJson(json['category'] ?? {}),
+      category: json['category'] != null
+          ? Category.fromJson(json['category'])
+          : Category.fromJson({}),
       description: json['description'] ?? '',
       price: (json['price'] ?? 0.0).toDouble(),
-      instructor: UserInformation.fromJson(json['instructor'] ?? {}),
+      instructor: json['instructor'] != null
+          ? UserInformation.fromJson(json['instructor'])
+          : UserInformation.fromJson({}),
       isPublished: json['isPublished'] ?? false,
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
-      frontPageImage: Image.fromJson(json['frontPageImage'] ?? {}),
-      reviews: (json['reviews'] as List?)
-              ?.map((review) => Review.fromJson(review))
-              .toList() ??
-          [],
-      lessons: (json['lessons'] as List?)
-              ?.map((lesson) => Lesson.fromJson(lesson))
-              .toList() ??
-          [],
+      frontPageImage: json['frontPageImage'] != null
+          ? Image.fromJson(json['frontPageImage'])
+          : Image.fromJson({}),
+      reviews: json['reviews'] != null
+          ? (json['reviews'] as List)
+              .map((review) => Review.fromJson(review))
+              .toList()
+          : [],
+      lessons: json['lessons'] != null
+          ? (json['lessons'] as List)
+              .map((lesson) => Lesson.fromJson(lesson))
+              .toList()
+          : [],
     );
   }
 

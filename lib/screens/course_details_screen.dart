@@ -1,12 +1,13 @@
 import 'dart:developer';
+import 'package:course_template/screens/sublesson_content_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:course_template/models/courseFull.dart';
 import 'package:course_template/models/course.dart' as course_models;
 import 'package:http/http.dart' as http;
-import 'package:course_template/screens/sublesson_content_screen.dart';
-import 'package:course_template/utils/PublicBaseURL.dart'; // Import the PublicBaseURL file
+import 'package:course_template/utils/PublicBaseURL.dart';
+import 'package:course_template/models/review.dart'; // Import the Review model
 
 class CourseDetailsScreen extends StatefulWidget {
   final course_models.Course course;
@@ -20,12 +21,20 @@ class CourseDetailsScreen extends StatefulWidget {
 class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   bool isFavorite = false;
   Course? fullCourse;
+  double averageRating = 0.0;
+  List<Review> reviews = [];
+  TextEditingController _commentController = TextEditingController();
+  int _rating = 0;
+  bool _isSubmitting = false;
+  int _currentPage = 1;
+  static const int _reviewsPerPage = 5;
 
   @override
   void initState() {
     super.initState();
     _fetchFullCourseDetails();
     _checkIfFavorite();
+    _fetchReviews();
   }
 
   Future<void> _checkIfFavorite() async {
@@ -70,7 +79,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
 
   Future<void> _fetchFullCourseDetails() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/api/course/${widget.course.id}'), // Use baseUrl
+      Uri.parse('$baseUrl/api/course/${widget.course.id}'),
     );
 
     if (response.statusCode == 200) {
@@ -83,16 +92,92 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     }
   }
 
+  Future<void> _fetchReviews() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/reviews/course?courseId=${widget.course.id}'),
+        headers: {
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = jsonDecode(response.body);
+        setState(() {
+          reviews = jsonResponse
+              .map((reviewJson) =>
+                  Review.fromJson(reviewJson as Map<String, dynamic>))
+              .toList();
+          averageRating = _calculateAverageRating(reviews);
+        });
+      } else {
+        log('Failed to load reviews: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Error fetching reviews: $e');
+    }
+  }
+
+  double _calculateAverageRating(List<Review> reviews) {
+    if (reviews.isEmpty) return 0.0;
+    return reviews.map((r) => r.rating).reduce((a, b) => a + b) /
+        reviews.length;
+  }
+
+  Future<void> _submitReview() async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/reviews/uploadReview'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'courseId': widget.course.id,
+          'userId': 1, // Replace with actual user ID
+          'rating': _rating,
+          'content': _commentController.text,
+          'createdAt': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _commentController.clear();
+          _rating = 0;
+          _isSubmitting = false;
+        });
+        _fetchReviews();
+      } else {
+        log('Failed to submit review: ${response.statusCode}');
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    } catch (e) {
+      log('Error submitting review: $e');
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  List<Review> get _paginatedReviews {
+    final startIndex = (_currentPage - 1) * _reviewsPerPage;
+    final endIndex = startIndex + _reviewsPerPage;
+    return reviews.sublist(
+        startIndex, endIndex > reviews.length ? reviews.length : endIndex);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Course Details'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () {},
-          ),
           IconButton(
             icon: Icon(
               isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -117,17 +202,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  '\$${widget.course.price.toString()}',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.purple,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
                 const SizedBox(height: 16),
                 const Text(
-                  'About Mentor',
+                  'Instructor',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -135,12 +212,13 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                 ),
                 const SizedBox(height: 8),
                 ListTile(
-                  leading: CircleAvatar(
+                  leading: const CircleAvatar(
                     backgroundImage: NetworkImage(
-                        'https://your-image-url.com/${widget.course.id}'),
+                        'https://static.vecteezy.com/system/resources/previews/000/505/708/original/vector-teaching-icon-design.jpg'),
                   ),
                   title: Text(widget.course.instructorName),
-                  subtitle: Text(widget.course.id.toString()),
+                  subtitle:
+                      Text("Creator of this course: ${widget.course.title}"),
                 ),
                 const Divider(),
                 const SizedBox(height: 16),
@@ -169,8 +247,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                                           builder: (context) =>
                                               SubLessonContentScreen(
                                                   subLesson: subLesson,
-                                                  instructorName: widget.course
-                                                      .instructorName), // Pass instructor name here
+                                                  instructorName: widget
+                                                      .course.instructorName),
                                         ),
                                       );
                                     },
@@ -188,17 +266,137 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...fullCourse!.reviews
-                    .map((review) => ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: NetworkImage(
-                                'https://your-image-url.com/${review.id}'),
+                Text(
+                  'Average Rating: ${(averageRating).toStringAsFixed(1)} / 5.0',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Based on ${reviews.length} reviews',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+                const Divider(),
+                const SizedBox(height: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Upload Review',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _commentController,
+                      decoration: const InputDecoration(
+                        labelText: 'Add a comment',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: List.generate(5, (index) {
+                        return IconButton(
+                          icon: Icon(
+                            index < _rating ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
                           ),
-                          title: Text(review.content),
-                          subtitle: Text('User review'),
-                          trailing: Text('4.5'),
-                        ))
-                    .toList(),
+                          onPressed: () {
+                            setState(() {
+                              _rating = index + 1;
+                            });
+                          },
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed:
+                          _rating > 0 && _commentController.text.isNotEmpty
+                              ? _isSubmitting
+                                  ? null
+                                  : _submitReview
+                              : null,
+                      child: _isSubmitting
+                          ? const CircularProgressIndicator()
+                          : const Text('Submit Review'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Reviews',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ..._paginatedReviews.map((review) {
+                      return ListTile(
+                        title: Text(review.content),
+                        subtitle: Text(
+                          "${review.user.fullName}",
+                          style: const TextStyle(color: Colors.blueAccent),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Rating: ${review.rating}'),
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                // TODO: Implement edit functionality
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () {
+                                // TODO: Implement delete functionality
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (_currentPage > 1)
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _currentPage--;
+                              });
+                            },
+                            child: const Text('Previous'),
+                          ),
+                        if (_currentPage * _reviewsPerPage < reviews.length)
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _currentPage++;
+                              });
+                            },
+                            child: const Text('Next'),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
                 const Divider(),
                 const SizedBox(height: 16),
               ],

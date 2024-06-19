@@ -98,11 +98,14 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
 
   Future<void> _editComment(Discussion discussion) async {
     final response = await http.put(
-      Uri.parse(
-          '$baseUrl/api/discussions/${discussion.id}?content=${Uri.encodeComponent(discussion.editedContent!)}'),
+      Uri.parse('$baseUrl/api/discussions/${discussion.id}'), // Use baseUrl
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type':
+            'application/json', // Ensure the content type is correctly set
       },
+      body: jsonEncode({
+        'content': discussion.editedContent,
+      }),
     );
 
     if (response.statusCode == 200) {
@@ -236,7 +239,8 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
                     _deleteComment(discussion.id);
                   },
                 ),
-              if (userId != discussion.user.id)
+              if (userId != discussion.user.id &&
+                  userName != discussion.user.fullName)
                 IconButton(
                   icon: Icon(Icons.reply),
                   onPressed: () {
@@ -275,31 +279,6 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
             const Text('Comments',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            TextField(
-              controller: _commentController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Add a comment',
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: _submitComment,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (replyingToName != null)
-              Chip(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Replying to $replyingToName'),
-                    IconButton(
-                      icon: Icon(Icons.cancel, size: 16),
-                      onPressed: _cancelReply,
-                    ),
-                  ],
-                ),
-              ),
             ...paginatedDiscussions
                 .map((discussion) => _buildCommentTile(discussion))
                 .toList(),
@@ -319,6 +298,29 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
                   child: Text('Next'),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            if (replyingToName != null)
+              TextButton(
+                onPressed: _cancelReply,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Replying to $replyingToName'),
+                    Icon(Icons.cancel, size: 16),
+                  ],
+                ),
+              ),
+            TextField(
+              controller: _commentController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Add a comment',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: _submitComment,
+                ),
+              ),
             ),
           ],
         ),
