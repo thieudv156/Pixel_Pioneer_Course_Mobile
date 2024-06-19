@@ -1,6 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:course_template/models/course.dart';
 import 'package:course_template/screens/course_details_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:course_template/utils/PublicBaseURL.dart';
 
 class SearchResultsScreen extends StatelessWidget {
   final List<Course> searchResults;
@@ -20,7 +21,7 @@ class SearchResultsScreen extends StatelessWidget {
           final course = searchResults[index];
           return ListTile(
             leading: Image.network(
-              course.imageUrl,
+              '$baseUrl${course.imageUrl}', // Use baseUrl to construct the full URL
               width: 50,
               height: 50,
               fit: BoxFit.cover,

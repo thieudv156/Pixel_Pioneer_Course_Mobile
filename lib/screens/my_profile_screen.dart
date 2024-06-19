@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the base URL
 
 class MyProfileScreen extends StatefulWidget {
   @override
@@ -34,8 +35,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
 
     if (_userId != null) {
       try {
-        final response = await http
-            .get(Uri.parse('http://10.0.2.2:8080/api/profile/$_userId'));
+        final response =
+            await http.get(Uri.parse('$baseUrl/api/profile/$_userId'));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -120,8 +121,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         // Handle email change verification
         try {
           final response = await http.put(
-            Uri.parse(
-                'http://10.0.2.2:8080/api/profile/changeInformation/$_userId'),
+            Uri.parse('$baseUrl/api/profile/changeInformation/$_userId'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(updatedData),
           );
@@ -149,8 +149,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
   Future<void> _updateProfile(Map<String, dynamic> updatedData) async {
     try {
       final response = await http.put(
-        Uri.parse(
-            'http://10.0.2.2:8080/api/profile/changeInformation/$_userId'),
+        Uri.parse('$baseUrl/api/profile/changeInformation/$_userId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(updatedData),
       );
@@ -172,7 +171,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     try {
       final response = await http.put(
         Uri.parse(
-            'http://10.0.2.2:8080/api/profile/changeInformation/$_userId/${_codeController.text}'),
+            '$baseUrl/api/profile/changeInformation/$_userId/${_codeController.text}'),
       );
 
       if (response.statusCode == 200) {

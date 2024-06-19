@@ -1,9 +1,9 @@
-// login_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:course_template/utils/PublicBaseURL.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final String password = _passwordController.text;
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/api/login'),
+      Uri.parse('$baseUrl/api/login'), // Using baseUrl here
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

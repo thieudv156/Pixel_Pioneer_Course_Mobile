@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:course_template/models/course.dart';
 import 'package:course_template/screens/course_details_screen.dart';
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the PublicBaseURL file
 
 class FavoriteCoursesScreen extends StatefulWidget {
   const FavoriteCoursesScreen({super.key});

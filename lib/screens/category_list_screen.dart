@@ -3,6 +3,7 @@ import 'package:course_template/models/category.dart';
 import 'package:course_template/screens/course_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the PublicBaseURL file
 
 class CategoryListScreen extends StatefulWidget {
   const CategoryListScreen({super.key});
@@ -24,7 +25,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
   Future<void> _fetchCategories() async {
     try {
       final response =
-          await http.get(Uri.parse('http://10.0.2.2:8080/api/category'));
+          await http.get(Uri.parse('$baseUrl/api/category')); // Use baseUrl
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);

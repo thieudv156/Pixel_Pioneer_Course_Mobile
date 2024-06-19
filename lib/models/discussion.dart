@@ -6,9 +6,12 @@ class Discussion {
   final SubLesson subLesson;
   final UserInformation user;
   final int? parentId;
-  final String content;
+  String content;
   final DateTime createdAt;
-  final List<int> childrenIds;
+  DateTime? editedAt;
+  final List<Discussion> children;
+  bool isEditing = false;
+  String? editedContent;
 
   Discussion({
     required this.id,
@@ -17,7 +20,8 @@ class Discussion {
     this.parentId,
     required this.content,
     required this.createdAt,
-    required this.childrenIds,
+    this.editedAt,
+    required this.children,
   });
 
   factory Discussion.fromJson(Map<String, dynamic> json) {
@@ -28,8 +32,13 @@ class Discussion {
       parentId: json['parent'],
       content: json['content'] ?? '',
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
-      childrenIds:
-          json['children'] != null ? List<int>.from(json['children']) : [],
+      editedAt:
+          json['editedAt'] != null ? DateTime.parse(json['editedAt']) : null,
+      children: json['children'] != null
+          ? (json['children'] as List)
+              .map((i) => Discussion.fromJson(i))
+              .toList()
+          : [],
     );
   }
 
@@ -41,7 +50,8 @@ class Discussion {
       'parent': parentId,
       'content': content,
       'createdAt': createdAt.toIso8601String(),
-      'children': childrenIds,
+      'editedAt': editedAt?.toIso8601String(),
+      'children': children.map((e) => e.toJson()).toList(),
     };
   }
 }

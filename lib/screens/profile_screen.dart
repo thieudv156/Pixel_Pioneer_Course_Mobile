@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'dart:developer';
-
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'package:course_template/screens/change_password_screen.dart';
 import 'package:course_template/screens/favorite_course_screen.dart';
 import 'package:course_template/screens/my_courses_screen.dart';
 import 'package:course_template/screens/payment_details_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'my_profile_screen.dart';
-import 'package:http/http.dart' as http;
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the base URL
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -43,8 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse(
-            'http://10.0.2.2:8080/api/enrollments/get-subscription?userId=$userId'),
+        Uri.parse('$baseUrl/api/enrollments/get-subscription?userId=$userId'),
       );
 
       if (response.statusCode == 200) {

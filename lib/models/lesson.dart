@@ -1,4 +1,3 @@
-import 'package:course_template/models/courseFull.dart';
 import 'package:course_template/models/sublesson.dart';
 
 class Lesson {

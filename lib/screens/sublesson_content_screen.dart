@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -6,11 +7,14 @@ import 'package:course_template/models/discussion.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the base URL
 
 class SubLessonContentScreen extends StatefulWidget {
   final SubLesson subLesson;
+  final String instructorName;
 
-  const SubLessonContentScreen({Key? key, required this.subLesson})
+  const SubLessonContentScreen(
+      {Key? key, required this.subLesson, required this.instructorName})
       : super(key: key);
 
   @override
@@ -20,8 +24,14 @@ class SubLessonContentScreen extends StatefulWidget {
 class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
   final TextEditingController _commentController = TextEditingController();
   List<Discussion> discussions = [];
-  Map<int, List<Discussion>> discussionReplies = {};
   int? userId;
+  String? userName;
+  int? replyingToId;
+  String? replyingToName;
+  int currentPage = 1;
+  static const int commentsPerPage = 5;
+
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -34,12 +44,13 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       userId = prefs.getInt('userId');
+      userName = prefs.getString('userFullname');
     });
   }
 
   Future<void> _loadDiscussions() async {
     final response = await http.get(Uri.parse(
-        'http://10.0.2.2:8080/api/discussions/sublesson?sLessonId=${widget.subLesson.id}'));
+        '$baseUrl/api/discussions/sublesson?sLessonId=${widget.subLesson.id}')); // Use baseUrl
     if (response.statusCode == 200) {
       final List<dynamic> jsonResponse = jsonDecode(response.body);
       log(jsonResponse.toString());
@@ -49,37 +60,24 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
           .map((json) => Discussion.fromJson(json))
           .toList();
 
-      // Separate top-level discussions from replies
-      final rootDiscussions = <Discussion>[];
-      final replyMapping = <int, List<Discussion>>{};
-
-      for (var discussion in allDiscussions) {
-        if (discussion.parentId == null) {
-          rootDiscussions.add(discussion);
-        } else {
-          replyMapping
-              .putIfAbsent(discussion.parentId!, () => [])
-              .add(discussion);
-        }
-      }
-
       setState(() {
-        discussions = rootDiscussions;
-        discussionReplies = replyMapping;
+        discussions = allDiscussions;
       });
     }
   }
 
-  Future<void> _submitComment({int? parentId}) async {
+  Future<void> _submitComment() async {
     final comment = _commentController.text;
     if (comment.isNotEmpty && userId != null) {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/discussions'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/api/discussions'), // Use baseUrl
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode({
           'subLessonId': widget.subLesson.id,
           'userId': userId,
-          'parentId': parentId,
+          'parentId': replyingToId,
           'content': comment,
           'createdAt': DateTime.now().toIso8601String(),
         }),
@@ -87,55 +85,134 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
 
       if (response.statusCode == 200) {
         _commentController.clear();
+        setState(() {
+          replyingToId = null;
+          replyingToName = null;
+        });
         _loadDiscussions();
+      } else {
+        log('Failed to post comment');
       }
     }
   }
 
-  Future<void> _editComment(int discussionId, String content) async {
+  Future<void> _editComment(Discussion discussion) async {
     final response = await http.put(
-      Uri.parse('http://10.0.2.2:8080/api/discussions/$discussionId'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'content': content,
-        'createdAt': DateTime.now().toIso8601String(),
-      }),
+      Uri.parse(
+          '$baseUrl/api/discussions/${discussion.id}?content=${Uri.encodeComponent(discussion.editedContent!)}'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     );
 
     if (response.statusCode == 200) {
+      setState(() {
+        discussion.isEditing = false;
+        discussion.content = discussion.editedContent!;
+        discussion.editedAt = DateTime.now();
+      });
       _loadDiscussions();
+    } else {
+      log('Failed to edit comment: ${response.body}');
     }
   }
 
   Future<void> _deleteComment(int discussionId) async {
     final response = await http.delete(
-        Uri.parse('http://10.0.2.2:8080/api/discussions/$discussionId'));
+        Uri.parse('$baseUrl/api/discussions/$discussionId')); // Use baseUrl
 
     if (response.statusCode == 204) {
       _loadDiscussions();
+    } else {
+      log('Failed to delete comment');
     }
   }
 
-  Widget _buildCommentTile(Discussion discussion, {bool isReply = false}) {
-    final children = discussionReplies[discussion.id] ?? [];
+  void _setReplyingTo(Discussion discussion) {
+    setState(() {
+      replyingToId = discussion.id;
+      replyingToName = discussion.user.fullName;
+    });
+  }
+
+  void _cancelReply() {
+    setState(() {
+      replyingToId = null;
+      replyingToName = null;
+    });
+  }
+
+  Widget _buildCommentTile(Discussion discussion, {int depth = 0}) {
+    bool isFirstChild = depth == 1;
 
     return Padding(
-      padding: EdgeInsets.only(left: isReply ? 16.0 : 0),
+      padding: EdgeInsets.only(left: isFirstChild ? 16.0 : 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (discussion.parentId != null)
-            Text(
-              '${discussion.user.fullName} to ${discussions.firstWhereOrNull((d) => d.id == discussion.parentId)?.user.fullName ?? 'Unknown'}',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          if (discussion.parentId == null)
-            Text(
-              discussion.user.fullName,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+          Row(
+            children: [
+              Text(
+                discussion.user.fullName,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              if (discussion.user.fullName == widget.instructorName)
+                Container(
+                  margin: EdgeInsets.only(left: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'INSTRUCTOR',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+            ],
+          ),
           Divider(),
-          Text(discussion.content),
+          if (discussion.isEditing)
+            TextField(
+              controller: TextEditingController(
+                  text: discussion.editedContent ?? discussion.content),
+              onChanged: (value) {
+                if (_debounce?.isActive ?? false) _debounce!.cancel();
+                _debounce = Timer(const Duration(milliseconds: 500), () {
+                  setState(() {
+                    discussion.editedContent = value;
+                  });
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Edit Comment',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.check),
+                  onPressed: discussion.editedContent?.isNotEmpty == true
+                      ? () {
+                          _editComment(discussion);
+                        }
+                      : null,
+                ),
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(child: Text(discussion.content)),
+                if (discussion.editedAt != null)
+                  Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Text(
+                      '(edited)',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
           SizedBox(height: 8),
           Text(
             discussion.createdAt.toString(),
@@ -147,29 +224,29 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
                 IconButton(
                   icon: Icon(Icons.edit),
                   onPressed: () {
-                    // Implement edit functionality
-                    _editComment(discussion.id, 'New content'); // Example usage
+                    setState(() {
+                      discussion.isEditing = true;
+                    });
                   },
                 ),
               if (userId == discussion.user.id)
                 IconButton(
                   icon: Icon(Icons.delete),
                   onPressed: () {
-                    // Implement delete functionality
                     _deleteComment(discussion.id);
                   },
                 ),
-              IconButton(
-                icon: Icon(Icons.reply),
-                onPressed: () {
-                  // Implement reply functionality
-                  _submitComment(parentId: discussion.id);
-                },
-              ),
+              if (userId != discussion.user.id)
+                IconButton(
+                  icon: Icon(Icons.reply),
+                  onPressed: () {
+                    _setReplyingTo(discussion);
+                  },
+                ),
             ],
           ),
-          ...children
-              .map((child) => _buildCommentTile(child, isReply: true))
+          ...discussion.children
+              .map((child) => _buildCommentTile(child, depth: depth + 1))
               .toList(),
         ],
       ),
@@ -178,6 +255,12 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final paginatedDiscussions = discussions
+        .skip((currentPage - 1) * commentsPerPage)
+        .take(commentsPerPage)
+        .toList();
+    final totalPages = (discussions.length / commentsPerPage).ceil();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.subLesson.title),
@@ -187,19 +270,11 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Html(
-              data: widget.subLesson.content,
-            ),
+            Html(data: widget.subLesson.content),
             const SizedBox(height: 16),
-            const Text(
-              'Comments',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text('Comments',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            ...discussions
-                .map((discussion) => _buildCommentTile(discussion))
-                .toList(),
-            const SizedBox(height: 16),
             TextField(
               controller: _commentController,
               decoration: InputDecoration(
@@ -207,22 +282,47 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
                 labelText: 'Add a comment',
                 suffixIcon: IconButton(
                   icon: Icon(Icons.send),
-                  onPressed: () => _submitComment(),
+                  onPressed: _submitComment,
                 ),
               ),
+            ),
+            const SizedBox(height: 8),
+            if (replyingToName != null)
+              Chip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Replying to $replyingToName'),
+                    IconButton(
+                      icon: Icon(Icons.cancel, size: 16),
+                      onPressed: _cancelReply,
+                    ),
+                  ],
+                ),
+              ),
+            ...paginatedDiscussions
+                .map((discussion) => _buildCommentTile(discussion))
+                .toList(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: currentPage > 1
+                      ? () => setState(() => currentPage--)
+                      : null,
+                  child: Text('Previous'),
+                ),
+                ElevatedButton(
+                  onPressed: currentPage < totalPages
+                      ? () => setState(() => currentPage++)
+                      : null,
+                  child: Text('Next'),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
-  }
-}
-
-extension FirstWhereOrNullExtension<E> on List<E> {
-  E? firstWhereOrNull(bool Function(E) test) {
-    for (E element in this) {
-      if (test(element)) return element;
-    }
-    return null;
   }
 }

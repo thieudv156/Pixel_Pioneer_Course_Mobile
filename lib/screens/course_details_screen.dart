@@ -6,6 +6,7 @@ import 'package:course_template/models/courseFull.dart';
 import 'package:course_template/models/course.dart' as course_models;
 import 'package:http/http.dart' as http;
 import 'package:course_template/screens/sublesson_content_screen.dart';
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the PublicBaseURL file
 
 class CourseDetailsScreen extends StatefulWidget {
   final course_models.Course course;
@@ -69,7 +70,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
 
   Future<void> _fetchFullCourseDetails() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8080/api/course/${widget.course.id}'),
+      Uri.parse('$baseUrl/api/course/${widget.course.id}'), // Use baseUrl
     );
 
     if (response.statusCode == 200) {
@@ -167,7 +168,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               SubLessonContentScreen(
-                                                  subLesson: subLesson),
+                                                  subLesson: subLesson,
+                                                  instructorName: widget.course
+                                                      .instructorName), // Pass instructor name here
                                         ),
                                       );
                                     },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the PublicBaseURL file
 
 class ChangePasswordScreen extends StatefulWidget {
   @override
@@ -19,7 +20,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   Future<void> _sendVerificationEmail() async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/api/reset-password/mail'),
+      Uri.parse('$baseUrl/api/reset-password/mail'), // Use baseUrl
       body: {'email': _emailController.text},
     );
 
@@ -36,7 +37,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   Future<void> _verifyCode() async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/api/reset-password/code'),
+      Uri.parse('$baseUrl/api/reset-password/code'), // Use baseUrl
       body: {'code': _codeController.text},
     );
 
@@ -53,7 +54,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   Future<void> _updatePassword() async {
     final response = await http.put(
-      Uri.parse('http://10.0.2.2:8080/api/reset-password/password'),
+      Uri.parse('$baseUrl/api/reset-password/password'), // Use baseUrl
       body: {
         'newPassword': _newPasswordController.text,
         'renewPassword': _confirmNewPasswordController.text,

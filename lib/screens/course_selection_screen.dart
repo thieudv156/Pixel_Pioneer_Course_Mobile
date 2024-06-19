@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:course_template/models/category.dart';
 import 'package:course_template/models/course.dart';
 import 'package:course_template/screens/course_details_screen.dart';
+import 'package:course_template/utils/PublicBaseURL.dart'; // Import the PublicBaseURL file
 
 class CourseListScreen extends StatefulWidget {
   final Category category;
@@ -29,7 +30,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:8080/api/course/categoryDto/${widget.category.id}'),
+            '$baseUrl/api/course/categoryDto/${widget.category.id}'), // Use baseUrl
       );
 
       if (response.statusCode == 200) {
@@ -61,7 +62,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.category.name} Courses'),
-        backgroundColor: Color.fromARGB(255, 196, 255, 114),
+        backgroundColor: const Color.fromARGB(255, 196, 255, 114),
         elevation: 0,
       ),
       body: _isLoading

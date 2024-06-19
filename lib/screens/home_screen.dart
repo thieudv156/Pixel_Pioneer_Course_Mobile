@@ -1,18 +1,19 @@
-import 'package:course_template/models/userinformation.dart';
-import 'package:course_template/screens/course_selection_screen.dart';
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:course_template/models/category.dart';
 import 'package:course_template/models/course.dart';
+import 'package:course_template/models/userinformation.dart';
 import 'package:course_template/screens/category_list_screen.dart';
 import 'package:course_template/screens/chat_screen.dart';
 import 'package:course_template/screens/course_details_screen.dart';
+import 'package:course_template/screens/course_selection_screen.dart';
 import 'package:course_template/screens/profile_screen.dart';
 import 'package:course_template/screens/search_results.dart';
+import 'package:course_template/utils/PublicBaseURL.dart';
 import 'package:course_template/widgets/course_chip.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -47,20 +48,19 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_userId != null) {
       // Check enrollment status
       final enrollmentResponse = await http.get(Uri.parse(
-          'http://10.0.2.2:8080/api/enrollments/check-enrollments?userId=$_userId'));
+          '$baseUrl/api/enrollments/check-enrollments?userId=$_userId'));
       if (enrollmentResponse.statusCode == 200) {
         _isEnrolled = jsonDecode(enrollmentResponse.body) as bool;
       }
     }
 
     final categoriesResponse =
-        await http.get(Uri.parse('http://10.0.2.2:8080/api/category'));
-    final coursesResponse =
-        await http.get(Uri.parse('http://10.0.2.2:8080/api/course'));
+        await http.get(Uri.parse('$baseUrl/api/category'));
+    final coursesResponse = await http.get(Uri.parse('$baseUrl/api/course'));
 
     if (_isEnrolled) {
-      final instructorsResponse = await http
-          .get(Uri.parse('http://10.0.2.2:8080/api/profile/instructor'));
+      final instructorsResponse =
+          await http.get(Uri.parse('$baseUrl/api/profile/instructor'));
       if (instructorsResponse.statusCode == 200) {
         final List<dynamic> instructorsData =
             jsonDecode(instructorsResponse.body);
@@ -68,8 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
         List<Map<String, dynamic>> instructorsList = [];
         for (var instructorJson in instructorsData) {
           UserInformation instructor = UserInformation.fromJson(instructorJson);
-          final coursesResponse = await http.get(Uri.parse(
-              'http://10.0.2.2:8080/api/course/instructor/${instructor.id}'));
+          final coursesResponse = await http.get(
+              Uri.parse('$baseUrl/api/course/instructor/${instructor.id}'));
           int courseCount = 0;
           if (coursesResponse.statusCode == 200) {
             final List<dynamic> coursesData = jsonDecode(coursesResponse.body);
@@ -220,8 +220,8 @@ class _HomePageState extends State<HomePage> {
   bool _isSearching = false;
 
   Future<List<Course>> searchCourses(String query) async {
-    final response = await http.get(Uri.parse(
-        'http://10.0.2.2:8080/api/course/search-by-name?courseName=$query'));
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/course/search-by-name?courseName=$query'));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
