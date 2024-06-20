@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:developer';
+import 'package:course_template/screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:course_template/screens/change_password_screen.dart';
@@ -18,6 +19,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   String _userFullname = 'User';
 
   @override
@@ -58,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showSubscriptionDialog(List<dynamic> subscriptionDetails) {
-    // Convert list to set and back to list to remove duplicates
     var uniqueDetails = subscriptionDetails.toSet().toList();
 
     showDialog(
@@ -117,12 +118,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _handleGoogleSignOut() async {
+    try {
+      await _googleSignIn.signOut();
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.clear();
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    } catch (error) {
+      _showErrorDialog("Error signing out: $error");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        leading: const BackButton(),
+        leading: BackButton(
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          },
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -197,13 +218,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               ProfileOption(
-                icon: Icons.live_tv,
-                text: 'Live Sessions',
-                onTap: () {
-                  // Navigate to Live Sessions screen
-                },
-              ),
-              ProfileOption(
                 icon: Icons.subscriptions,
                 text: 'Subscription Plan',
                 onTap: _fetchSubscriptionDetails,
@@ -211,13 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ProfileOption(
                 icon: Icons.logout,
                 text: 'Logout',
-                onTap: () async {
-                  SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
-                  prefs.clear();
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, '/login', (route) => false);
-                },
+                onTap: _handleGoogleSignOut,
               ),
             ],
           ),

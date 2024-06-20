@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:course_template/utils/PublicBaseURL.dart';
 
 class SplashScreen extends StatelessWidget {
   @override

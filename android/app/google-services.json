@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "270994986789",
+    "project_id": "pixel-pioneer-course-9e9f2",
+    "storage_bucket": "pixel-pioneer-course-9e9f2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:270994986789:android:1ccbe3e942efe89766accc",
+        "android_client_info": {
+          "package_name": "vn.aptech.course_template"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "270994986789-9csos86itagjaubnsk4o4fbaumhauoqq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "vn.aptech.course_template",
+            "certificate_hash": "857e833b1f0ec68428b678a0a925ee4a6111bda6"
+          }
+        },
+        {
+          "client_id": "270994986789-dlnc1ius8thkqrosjb8809k6h82pmmjr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnpJ3So0e86EamZqs4wOA8aJ3Z_ricnu4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "270994986789-dlnc1ius8thkqrosjb8809k6h82pmmjr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

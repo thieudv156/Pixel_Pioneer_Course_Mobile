@@ -29,6 +29,10 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   int _currentPage = 1;
   static const int _reviewsPerPage = 5;
 
+  int? _editingReviewId;
+  TextEditingController _editCommentController = TextEditingController();
+  int _editRating = 0;
+
   @override
   void initState() {
     super.initState();
@@ -130,6 +134,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     });
 
     try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int userId = prefs.getInt('userId') ?? 0;
       final response = await http.post(
         Uri.parse('$baseUrl/api/reviews/uploadReview'),
         headers: {
@@ -137,7 +143,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         },
         body: jsonEncode({
           'courseId': widget.course.id,
-          'userId': 1, // Replace with actual user ID
+          'userId': userId,
           'rating': _rating,
           'content': _commentController.text,
           'createdAt': DateTime.now().toIso8601String(),
@@ -163,6 +169,69 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         _isSubmitting = false;
       });
     }
+  }
+
+  Future<void> _editReview(int reviewId) async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/reviews/editReview?reviewId=$reviewId'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'courseId': widget.course.id,
+          'userId': await _getUserId(),
+          'rating': _editRating,
+          'content': _editCommentController.text,
+          'createdAt': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _editingReviewId = null;
+          _editCommentController.clear();
+          _editRating = 0;
+          _isSubmitting = false;
+        });
+        _fetchReviews();
+      } else {
+        log('Failed to edit review: ${response.statusCode}');
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    } catch (e) {
+      log('Error editing review: $e');
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  Future<void> _deleteReview(int reviewId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/api/reviews/deleteReview?reviewId=$reviewId'),
+      );
+
+      if (response.statusCode == 200) {
+        _fetchReviews();
+      } else {
+        log('Failed to delete review: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Error deleting review: $e');
+    }
+  }
+
+  Future<int> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('userId') ?? 0;
   }
 
   List<Review> get _paginatedReviews {
@@ -345,30 +414,108 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                     ),
                     const SizedBox(height: 8),
                     ..._paginatedReviews.map((review) {
-                      return ListTile(
-                        title: Text(review.content),
-                        subtitle: Text(
-                          "${review.user.fullName}",
-                          style: const TextStyle(color: Colors.blueAccent),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Rating: ${review.rating}'),
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                // TODO: Implement edit functionality
-                              },
+                      bool isEditing = _editingReviewId == review.id;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (isEditing)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                TextField(
+                                  controller: _editCommentController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Edit comment',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  maxLines: 3,
+                                  onChanged: (value) {
+                                    setState(() {});
+                                  },
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: List.generate(5, (index) {
+                                    return IconButton(
+                                      icon: Icon(
+                                        index < _editRating
+                                            ? Icons.star
+                                            : Icons.star_border,
+                                        color: Colors.amber,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _editRating = index + 1;
+                                        });
+                                      },
+                                    );
+                                  }),
+                                ),
+                              ],
+                            )
+                          else
+                            Text(review.content),
+                          Text(
+                            "Rating: ${review.rating.toString()} stars",
+                            style: const TextStyle(
+                              color: Colors.deepOrange,
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () {
-                                // TODO: Implement delete functionality
-                              },
-                            ),
-                          ],
-                        ),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "${review.user.fullName}",
+                                style:
+                                    const TextStyle(color: Colors.blueAccent),
+                              ),
+                              Row(
+                                children: [
+                                  if (isEditing)
+                                    Row(
+                                      children: [
+                                        TextButton(
+                                          onPressed: _editCommentController
+                                                      .text.isNotEmpty &&
+                                                  _editRating > 0
+                                              ? () => _editReview(review.id)
+                                              : null,
+                                          child: const Text('Save Changes'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _editingReviewId = null;
+                                              _editCommentController.clear();
+                                              _editRating = 0;
+                                            });
+                                          },
+                                          child: const Text('Cancel Edit'),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () {
+                                        setState(() {
+                                          _editingReviewId = review.id;
+                                          _editCommentController.text =
+                                              review.content;
+                                          _editRating = review.rating;
+                                        });
+                                      },
+                                    ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () => _deleteReview(review.id),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const Divider(),
+                        ],
                       );
                     }).toList(),
                     const SizedBox(height: 8),
