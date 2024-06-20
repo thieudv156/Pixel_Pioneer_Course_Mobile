@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,11 +9,12 @@ import 'package:course_template/models/userinformation.dart';
 import 'package:course_template/screens/category_list_screen.dart';
 import 'package:course_template/screens/chat_screen.dart';
 import 'package:course_template/screens/course_details_screen.dart';
-import 'package:course_template/screens/course_selection_screen.dart';
-import 'package:course_template/screens/profile_screen.dart';
 import 'package:course_template/screens/search_results.dart';
+import 'package:course_template/screens/profile_screen.dart';
 import 'package:course_template/utils/PublicBaseURL.dart';
 import 'package:course_template/widgets/course_chip.dart';
+
+import 'course_selection_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Category> _categories = [];
   List<Course> _courses = [];
   List<Map<String, dynamic>> _instructors =
-      []; // List of instructors with course count
+  []; // List of instructors with course count
   bool _isLoading = true;
   bool _isEnrolled = false;
   String? _userFullname;
@@ -48,22 +48,22 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_userId != null) {
       // Check enrollment status
       final enrollmentResponse = await http.get(Uri.parse(
-          '$baseUrl/api/enrollments/check-enrollments?userId=$_userId'));
+          '$baseUrl/api/enrollments/check-enrollment?userId=$_userId'));
       if (enrollmentResponse.statusCode == 200) {
         _isEnrolled = jsonDecode(enrollmentResponse.body) as bool;
       }
     }
 
     final categoriesResponse =
-        await http.get(Uri.parse('$baseUrl/api/category'));
+    await http.get(Uri.parse('$baseUrl/api/category'));
     final coursesResponse = await http.get(Uri.parse('$baseUrl/api/course'));
 
     if (_isEnrolled) {
       final instructorsResponse =
-          await http.get(Uri.parse('$baseUrl/api/profile/instructor'));
+      await http.get(Uri.parse('$baseUrl/api/profile/instructor'));
       if (instructorsResponse.statusCode == 200) {
         final List<dynamic> instructorsData =
-            jsonDecode(instructorsResponse.body);
+        jsonDecode(instructorsResponse.body);
 
         List<Map<String, dynamic>> instructorsList = [];
         for (var instructorJson in instructorsData) {
@@ -92,9 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final List<dynamic> coursesData = jsonDecode(coursesResponse.body);
 
       final List<Category> fetchedCategories =
-          categoriesData.map((json) => Category.fromJson(json)).toList();
+      categoriesData.map((json) => Category.fromJson(json)).toList();
       final List<Course> fetchedCourses =
-          coursesData.map((json) => Course.fromJson(json)).toList();
+      coursesData.map((json) => Course.fromJson(json)).toList();
 
       setState(() {
         _categories = fetchedCategories;
@@ -122,32 +122,32 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             children: [
-              CircleAvatar(
+              const CircleAvatar(
                 backgroundImage: AssetImage('assets/profile.jpg'),
                 radius: 20,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _userFullname ?? 'User',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Find your course and enjoy new arrivals✨',
                     style: TextStyle(fontSize: 12),
                   ),
                 ],
               ),
-              Spacer(),
-              Icon(Icons.notifications, size: 28),
+              const Spacer(),
+              const Icon(Icons.notifications, size: 28),
             ],
           ),
         ),
@@ -185,16 +185,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Widget> get _widgetOptions => [
-        HomePage(
-          courses: _courses,
-          categories: _categories,
-          instructors: _instructors,
-          isEnrolled: _isEnrolled,
-        ),
-        const CategoryListScreen(),
-        const ChatScreen(),
-        const ProfileScreen(),
-      ];
+    HomePage(
+      courses: _courses,
+      categories: _categories,
+      instructors: _instructors,
+      isEnrolled: _isEnrolled,
+    ),
+    const CategoryListScreen(),
+    const ChatScreen(),
+    const ProfileScreen(),
+  ];
 }
 
 class HomePage extends StatefulWidget {
@@ -204,12 +204,12 @@ class HomePage extends StatefulWidget {
   final bool isEnrolled;
 
   const HomePage({
-    Key? key,
+    super.key,
     required this.courses,
     required this.categories,
     required this.instructors,
     required this.isEnrolled,
-  }) : super(key: key);
+  });
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -309,6 +309,8 @@ class _HomePageState extends State<HomePage> {
             );
           }),
           _buildCategories(context),
+          const SizedBox(height: 16),
+          _buildPaymentButton(context),
         ],
       ),
     );
@@ -337,9 +339,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCourseCard(
-    BuildContext context, {
-    required Course course,
-  }) {
+      BuildContext context, {
+        required Course course,
+      }) {
     final screenSize = MediaQuery.of(context).size;
     return GestureDetector(
       onTap: () {
@@ -398,11 +400,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildInstructorCard(
-    BuildContext context, {
-    required String name,
-    required String email,
-    required String courseCount,
-  }) {
+      BuildContext context, {
+        required String name,
+        required String email,
+        required String courseCount,
+      }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
@@ -469,7 +471,7 @@ class _HomePageState extends State<HomePage> {
 
     final random = Random();
     final displayedInstructors =
-        (widget.instructors.toList()..shuffle(random)).take(5).toList();
+    (widget.instructors.toList()..shuffle(random)).take(5).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,11 +479,11 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 16),
         ...displayedInstructors
             .map((instructor) => _buildInstructorCard(
-                  context,
-                  name: instructor['instructor'].fullName,
-                  email: instructor['instructor'].email,
-                  courseCount: instructor['courseCount'],
-                ))
+          context,
+          name: instructor['instructor'].fullName,
+          email: instructor['instructor'].email,
+          courseCount: instructor['courseCount'],
+        ))
             .toList(),
       ],
     );
@@ -495,7 +497,7 @@ class _HomePageState extends State<HomePage> {
     final random = Random();
     final shuffledCourses = widget.courses.toList()..shuffle(random);
     final selectedCourses =
-        shuffledCourses.take(2 + random.nextInt(2)).toList();
+    shuffledCourses.take(2 + random.nextInt(2)).toList();
 
     return SizedBox(
       height: 170,
@@ -519,7 +521,7 @@ class _HomePageState extends State<HomePage> {
     final random = Random();
     final shuffledCategories = widget.categories.toList()..shuffle(random);
     final selectedCategories =
-        shuffledCategories.take((4 + random.nextInt(3))).toList();
+    shuffledCategories.take((4 + random.nextInt(3))).toList();
 
     return Wrap(
       spacing: 10,
@@ -537,6 +539,25 @@ class _HomePageState extends State<HomePage> {
           },
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildPaymentButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.pushNamed(context, '/enrollment');
+      },
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white, backgroundColor: Colors.purple,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 15),
+      ),
+      child: const Text(
+        'Proceed to Payment',
+        style: TextStyle(fontSize: 16),
+      ),
     );
   }
 }
