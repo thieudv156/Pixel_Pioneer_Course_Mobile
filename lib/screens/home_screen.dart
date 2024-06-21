@@ -147,7 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const Spacer(),
-              const Icon(Icons.notifications, size: 28),
             ],
           ),
         ),
@@ -172,10 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Categories',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Messages',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
             label: 'Profile',
           ),
@@ -192,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
           isEnrolled: _isEnrolled,
         ),
         const CategoryListScreen(),
-        const ChatScreen(),
+        // const ChatScreen(),
         const ProfileScreen(),
       ];
 }

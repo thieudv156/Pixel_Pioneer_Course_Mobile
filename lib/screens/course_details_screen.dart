@@ -85,7 +85,6 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     final response = await http.get(
       Uri.parse('$baseUrl/api/course/${widget.course.id}'),
     );
-
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
       setState(() {

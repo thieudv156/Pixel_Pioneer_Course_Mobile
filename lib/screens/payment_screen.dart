@@ -1,4 +1,6 @@
 // payment_screen.dart
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -11,7 +13,8 @@ class PaymentScreen extends StatelessWidget {
 
   PaymentScreen({required this.amount, required this.subscriptionType});
 
-  Future<void> _processCreditCardPayment(BuildContext context, String cardNumber, String expiration, String cvv) async {
+  Future<void> _processCreditCardPayment(BuildContext context,
+      String cardNumber, String expiration, String cvv) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int? userId = prefs.getInt('userId');
 
@@ -97,7 +100,8 @@ class PaymentScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 // Call _processCreditCardPayment with card details
-                _processCreditCardPayment(context, '4111111111111111', '12/23', '123');
+                _processCreditCardPayment(
+                    context, '4111111111111111', '12/23', '123');
               },
               child: Text('Pay Now'),
             ),

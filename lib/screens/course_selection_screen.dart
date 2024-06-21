@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:course_template/models/category.dart';
 import 'package:course_template/models/course.dart';
 import 'package:course_template/screens/course_details_screen.dart';
+import 'package:course_template/screens/home_screen.dart'; // Import HomeScreen
 import 'package:course_template/utils/PublicBaseURL.dart'; // Import the PublicBaseURL file
 
 class CourseListScreen extends StatefulWidget {
@@ -112,6 +113,17 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 },
               ),
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+            (Route<dynamic> route) => false,
+          );
+        },
+        child: const Icon(Icons.home),
+        backgroundColor: const Color.fromARGB(255, 136, 239, 140),
+      ),
     );
   }
 }

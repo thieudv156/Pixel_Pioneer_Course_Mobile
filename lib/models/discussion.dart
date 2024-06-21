@@ -36,6 +36,7 @@ class Discussion {
           json['editedAt'] != null ? DateTime.parse(json['editedAt']) : null,
       children: json['children'] != null
           ? (json['children'] as List)
+              .where((i) => i is Map<String, dynamic>)
               .map((i) => Discussion.fromJson(i))
               .toList()
           : [],

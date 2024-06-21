@@ -97,6 +97,7 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
   }
 
   Future<void> _editComment(Discussion discussion) async {
+    log(discussion.editedContent.toString());
     final response = await http.put(
       Uri.parse('$baseUrl/api/discussions/${discussion.id}'), // Use baseUrl
       headers: {
@@ -167,7 +168,7 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
                     color: Colors.blue,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
+                  child: const Text(
                     'INSTRUCTOR',
                     style: TextStyle(
                       color: Colors.white,
