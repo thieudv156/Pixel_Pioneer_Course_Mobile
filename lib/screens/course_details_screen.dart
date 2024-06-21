@@ -246,15 +246,6 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Course Details'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? Colors.red : null,
-            ),
-            onPressed: _toggleFavorite,
-          ),
-        ],
       ),
       body: fullCourse == null
           ? const Center(child: CircularProgressIndicator())

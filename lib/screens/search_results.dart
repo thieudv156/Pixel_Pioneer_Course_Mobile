@@ -21,7 +21,7 @@ class SearchResultsScreen extends StatelessWidget {
           final course = searchResults[index];
           return ListTile(
             leading: Image.network(
-              '$baseUrl${course.imageUrl}', // Use baseUrl to construct the full URL
+              course.imageUrl, // Use baseUrl to construct the full URL
               width: 50,
               height: 50,
               fit: BoxFit.cover,

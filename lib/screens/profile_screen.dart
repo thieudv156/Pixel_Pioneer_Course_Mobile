@@ -196,17 +196,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               ProfileOption(
-                icon: Icons.favorite,
-                text: 'My Favorite Courses',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const FavoriteCoursesScreen()),
-                  );
-                },
-              ),
-              ProfileOption(
                 icon: Icons.lock,
                 text: 'Change Password',
                 onTap: () {
