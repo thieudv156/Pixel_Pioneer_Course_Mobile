@@ -1,4 +1,7 @@
-enum PaymentMethod { PAYPAL, CREDIT_CARD }
+enum PaymentMethod {
+  PAYPAL,
+  CREDIT_CARD
+}
 
 extension PaymentMethodExtension on PaymentMethod {
   static PaymentMethod fromString(String value) {

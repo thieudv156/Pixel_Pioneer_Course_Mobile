@@ -1,18 +1,19 @@
+// models/payment_request.dart
 class PaymentRequest {
   final double price;
   final String paymentMethod;
   final String subscriptionType;
-  final String cardNumber;
-  final String expiration;
-  final String cvv;
+  final String? cardNumber;
+  final String? expiration;
+  final String? cvv;
 
   PaymentRequest({
     required this.price,
     required this.paymentMethod,
     required this.subscriptionType,
-    required this.cardNumber,
-    required this.expiration,
-    required this.cvv,
+    this.cardNumber,
+    this.expiration,
+    this.cvv,
   });
 
   Map<String, dynamic> toJson() {

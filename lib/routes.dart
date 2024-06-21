@@ -62,7 +62,7 @@ class Routes {
         return MaterialPageRoute(
           builder: (_) => PaymentScreen(
             subscriptionType: subscriptionType,
-            price: price,
+            amount: price,
           ),
         );
       case '/payment-success':

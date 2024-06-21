@@ -2,34 +2,32 @@
 import 'package:flutter/material.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
-  const PaymentSuccessScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Payment Success'),
+        title: Text('Payment Successful'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.check_circle,
               color: Colors.green,
               size: 100,
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'Payment was successful!',
-              style: TextStyle(fontSize: 24),
+            SizedBox(height: 20),
+            Text(
+              'Payment Successful!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.popUntil(context, (route) => route.isFirst);
+                Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
               },
-              child: const Text('Back to Home'),
+              child: Text('Go to Home'),
             ),
           ],
         ),

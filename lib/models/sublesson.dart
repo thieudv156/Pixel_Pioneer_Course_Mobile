@@ -1,4 +1,4 @@
-import 'package:course_template/models/PaymentMethod.dart';
+import 'package:course_template/models/payment_method.dart';
 import 'package:course_template/models/SubscriptionType.dart';
 import 'package:course_template/models/lesson.dart';
 import 'package:course_template/models/enrollment.dart';

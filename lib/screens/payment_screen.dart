@@ -1,147 +1,107 @@
-// screens/payment_screen.dart
+// payment_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/payment_request.dart';
-import '../providers/enrollment_provider.dart';
-import 'payment_success_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:course_template/utils/PublicBaseURL.dart';
 
-class PaymentScreen extends StatefulWidget {
+class PaymentScreen extends StatelessWidget {
+  final double amount;
   final String subscriptionType;
-  final double price;
 
-  const PaymentScreen({super.key,
-    required this.subscriptionType,
-    required this.price,
-  });
+  PaymentScreen({required this.amount, required this.subscriptionType});
 
-  @override
-  _PaymentScreenState createState() => _PaymentScreenState();
-}
+  Future<void> _processCreditCardPayment(BuildContext context, String cardNumber, String expiration, String cvv) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? userId = prefs.getInt('userId');
 
-class _PaymentScreenState extends State<PaymentScreen> {
-  final _formKey = GlobalKey<FormState>();
-  String _paymentMethod = 'CREDIT_CARD';
-  final _cardNumberController = TextEditingController();
-  final _expirationController = TextEditingController();
-  final _cvvController = TextEditingController();
+    if (userId != null) {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/enrollments/credit-card-payment'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'userId': userId,
+          'cardNumber': cardNumber,
+          'expiration': expiration,
+          'cvv': cvv,
+          'price': amount,
+          'subscriptionType': subscriptionType,
+          'paymentMethod': 'CREDIT_CARD',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Payment successful
+        Navigator.pushNamed(context, '/payment_success');
+      } else {
+        // Payment failed
+        _showErrorDialog(context, "Payment failed: ${response.body}");
+      }
+    } else {
+      // User not authenticated
+      _showErrorDialog(context, "User not authenticated");
+    }
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Process Payment'),
+        title: Text('Payment'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Text('Subscription Type: ${widget.subscriptionType}'),
-              Text('Price: \$${widget.price}'),
-              DropdownButtonFormField<String>(
-                value: _paymentMethod,
-                items: ['CREDIT_CARD', 'PAYPAL'].map((String method) {
-                  return DropdownMenuItem<String>(
-                    value: method,
-                    child: Text(method),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _paymentMethod = value!;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Payment Method'),
+        child: Column(
+          children: <Widget>[
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Card Number',
               ),
-              if (_paymentMethod == 'CREDIT_CARD') ...[
-                TextFormField(
-                  controller: _cardNumberController,
-                  decoration: const InputDecoration(labelText: 'Card Number'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the card number';
-                    }
-                    if (!RegExp(r'^[0-9]{16}$').hasMatch(value)) {
-                      return 'Please enter a valid 16-digit card number';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _expirationController,
-                  decoration: const InputDecoration(labelText: 'Expiration Date (MM/YY)'),
-                  keyboardType: TextInputType.datetime,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the expiration date';
-                    }
-                    if (!RegExp(r'^[0-1][0-9]/[0-9]{2}$').hasMatch(value)) {
-                      return 'Please enter a valid expiration date (MM/YY)';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _cvvController,
-                  decoration: const InputDecoration(labelText: 'CVV'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the CVV';
-                    }
-                    if (!RegExp(r'^[0-9]{3}$').hasMatch(value)) {
-                      return 'Please enter a valid 3-digit CVV';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    SharedPreferences prefs = await SharedPreferences.getInstance();
-                    final userId = prefs.getInt('userId');
-                    final sessionId = prefs.getString('sessionId');
-
-                    if (userId != null && sessionId != null) {
-                      final paymentRequest = PaymentRequest(
-                        price: widget.price,
-                        paymentMethod: _paymentMethod,
-                        subscriptionType: widget.subscriptionType,
-                        cardNumber: _cardNumberController.text,
-                        expiration: _expirationController.text,
-                        cvv: _cvvController.text,
-                      );
-
-                      final enrollmentProvider = Provider.of<EnrollmentProvider>(context, listen: false);
-                      try {
-                        await enrollmentProvider.processPayment(paymentRequest, sessionId);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PaymentSuccessScreen(),
-                          ),
-                        );
-                      } catch (error) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to process payment: $error')),
-                        );
-                      }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User not authenticated')),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Process Payment'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Expiration Date (MM/YY)',
               ),
-            ],
-          ),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'CVV',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Call _processCreditCardPayment with card details
+                _processCreditCardPayment(context, '4111111111111111', '12/23', '123');
+              },
+              child: Text('Pay Now'),
+            ),
+          ],
         ),
       ),
     );

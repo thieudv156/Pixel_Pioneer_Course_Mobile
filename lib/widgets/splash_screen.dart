@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:course_template/utils/PublicBaseURL.dart';
 
 class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     _checkLoginStatus(context);
