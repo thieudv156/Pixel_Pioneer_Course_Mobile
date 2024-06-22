@@ -12,9 +12,13 @@ import 'package:course_template/utils/PublicBaseURL.dart'; // Import the base UR
 class SubLessonContentScreen extends StatefulWidget {
   final SubLesson subLesson;
   final String instructorName;
+  final int courseId; // Add courseId parameter
 
   const SubLessonContentScreen(
-      {Key? key, required this.subLesson, required this.instructorName})
+      {Key? key,
+      required this.subLesson,
+      required this.instructorName,
+      required this.courseId})
       : super(key: key);
 
   @override
@@ -30,6 +34,7 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
   String? replyingToName;
   int currentPage = 1;
   static const int commentsPerPage = 5;
+  bool isCompleted = false;
 
   Timer? _debounce;
 
@@ -38,6 +43,7 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
     super.initState();
     _loadDiscussions();
     _loadUserId();
+    _checkProgress();
   }
 
   Future<void> _loadUserId() async {
@@ -146,6 +152,42 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
     });
   }
 
+  Future<void> _checkProgress() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt('userId') ?? 0;
+
+    final response = await http.get(
+      Uri.parse(
+          '$baseUrl/api/progress/check-progress?courseId=${widget.courseId}&userId=$userId'),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = jsonDecode(response.body);
+      setState(() {
+        isCompleted = jsonResponse.any((progress) =>
+            progress['subLesson']['id'] == widget.subLesson.id &&
+            progress['isCompleted']);
+      });
+    }
+  }
+
+  void _markAsComplete() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt('userId') ?? 0;
+
+    final response = await http.put(
+      Uri.parse(
+          '$baseUrl/api/progress/finish-sublesson?sublessonId=${widget.subLesson.id}&userId=$userId'),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        isCompleted = true;
+      });
+      Navigator.pop(context, true); // Pass true to indicate completion
+    }
+  }
+
   Widget _buildCommentTile(Discussion discussion, {int depth = 0}) {
     bool isFirstChild = depth == 1;
 
@@ -170,10 +212,7 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
                   ),
                   child: const Text(
                     'INSTRUCTOR',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 10),
                   ),
                 ),
             ],
@@ -326,6 +365,12 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
           ],
         ),
       ),
+      floatingActionButton: !isCompleted
+          ? FloatingActionButton(
+              onPressed: _markAsComplete,
+              child: Text('Finish'),
+            )
+          : null,
     );
   }
 }

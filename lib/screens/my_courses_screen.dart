@@ -1,7 +1,68 @@
+import 'dart:convert';
+import 'package:course_template/models/course.dart';
+import 'package:course_template/utils/PublicBaseURL.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'course_details_screen.dart'; // Import your CourseDetailsScreen here
 
-class MyCoursesScreen extends StatelessWidget {
-  const MyCoursesScreen({super.key});
+class MyCoursesScreen extends StatefulWidget {
+  const MyCoursesScreen({Key? key}) : super(key: key);
+
+  @override
+  _MyCoursesScreenState createState() => _MyCoursesScreenState();
+}
+
+class _MyCoursesScreenState extends State<MyCoursesScreen> {
+  List<Course> ongoingCourses = [];
+  List<Course> completedCourses = [];
+  Map<int, double> courseCompletionPercentages = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchEnrolledCourses();
+  }
+
+  Future<void> _fetchEnrolledCourses() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt('userId') ?? 0;
+
+    try {
+      // Fetch enrolled courses
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/course/enrolled?userId=$userId'));
+
+      if (response.statusCode == 200) {
+        List<dynamic> coursesJson = jsonDecode(response.body);
+
+        List<Course> allCourses =
+            coursesJson.map((json) => Course.fromJson(json)).toList();
+
+        for (Course course in allCourses) {
+          // Fetch completion percentage for each course
+          final percentResponse = await http.get(Uri.parse(
+              '$baseUrl/api/progress/percent-progress-done?courseId=${course.id}&userId=$userId'));
+
+          if (percentResponse.statusCode == 200) {
+            double completionPercentage =
+                double.tryParse(percentResponse.body) ?? 0.0;
+            courseCompletionPercentages[course.id] = completionPercentage;
+
+            if (completionPercentage < 100) {
+              ongoingCourses.add(course);
+            } else {
+              completedCourses.add(course);
+            }
+          }
+        }
+
+        setState(() {});
+      }
+    } catch (e) {
+      print('Error fetching enrolled courses: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +75,7 @@ class MyCoursesScreen extends StatelessWidget {
             tabs: [
               Tab(text: 'Ongoing'),
               Tab(text: 'Completed'),
-              Tab(text: 'Certificates'),
+              Tab(text: 'Badges'),
             ],
           ),
         ),
@@ -30,75 +91,77 @@ class MyCoursesScreen extends StatelessWidget {
   }
 
   Widget _buildOngoingTab() {
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      children: [
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundImage: AssetImage('assets/course.jpg'),
+      itemCount: ongoingCourses.length,
+      itemBuilder: (context, index) {
+        Course course = ongoingCourses[index];
+        double completionPercentage =
+            courseCompletionPercentages[course.id] ?? 0.0;
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(course.imageUrl),
           ),
-          title: const Text('Learn UI - UX For Beginners'),
-          subtitle: const Text('Huberta Raj'),
-          trailing: const Text('75%'),
-        ),
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundImage: AssetImage('assets/course.jpg'),
-          ),
-          title: const Text('Application Design For Beginner'),
-          subtitle: const Text('Penelo Tucker'),
-          trailing: const Text('50%'),
-        ),
-        // Add more ListTiles here
-      ],
+          title: Text(course.title),
+          subtitle: Text(course.instructorName),
+          trailing: Text('${completionPercentage.toStringAsFixed(0)}%'),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CourseDetailsScreen(course: course),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildCompletedTab() {
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      children: [
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundImage: AssetImage('assets/course.jpg'),
+      itemCount: completedCourses.length,
+      itemBuilder: (context, index) {
+        Course course = completedCourses[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(course.imageUrl),
           ),
-          title: const Text('Upwork Training'),
-          subtitle: const Text('15 Min'),
+          title: Text(course.title),
+          subtitle: Text(course.instructorName),
           trailing: const Text('Add Reviews'),
-        ),
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundImage: AssetImage('assets/course.jpg'),
-          ),
-          title: const Text('What Is Design Thinking?'),
-          subtitle: const Text('20 Min'),
-          trailing: const Text('Add Reviews'),
-        ),
-        // Add more ListTiles here
-      ],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CourseDetailsScreen(course: course),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildCertificatesTab() {
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      children: [
-        ListTile(
+      itemCount: completedCourses.length,
+      itemBuilder: (context, index) {
+        Course course = completedCourses[index];
+        return ListTile(
           leading: const CircleAvatar(
-            backgroundImage: AssetImage('assets/certificate.jpg'),
+            backgroundImage: NetworkImage(
+                'https://th.bing.com/th/id/OIP.QVjRojMON6pQA1TROYGv3AHaHa?w=512&h=512&rs=1&pid=ImgDetMain'),
           ),
-          title: const Text('Certificate of Completion'),
-          subtitle: const Text('Learn UI - UX For Beginners'),
-        ),
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundImage: AssetImage('assets/certificate.jpg'),
-          ),
-          title: const Text('Certificate of Excellence'),
-          subtitle: const Text('Application Design For Beginner'),
-        ),
-        // Add more ListTiles here
-      ],
+          title: const Text('Completion Badge'),
+          subtitle: Text(course.title),
+          onTap: () {
+            // Handle certificate viewing or download here
+          },
+        );
+      },
     );
   }
 }

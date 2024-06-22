@@ -13,7 +13,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameOrEmailController = TextEditingController();
+  final TextEditingController _usernameOrEmailController =
+      TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscureText = true;
   bool _rememberMe = false;
@@ -40,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'username': usernameOrEmail,
+        'eu': usernameOrEmail,
         'password': password,
       }),
     );
@@ -52,8 +53,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final responseBody = jsonDecode(response.body);
       final userId = responseBody['id'];
+      final userFname = responseBody['fullName'];
 
       prefs.setInt('userId', userId);
+      prefs.setString('userFullname', userFname);
 
       if (_rememberMe) {
         prefs.setString('usernameOrEmail', usernameOrEmail);
@@ -174,42 +177,42 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               child: const Text("Don't have an account? Sign up"),
             ),
-            const SizedBox(height: 5),
-            const Row(
-              children: <Widget>[
-                Expanded(
-                  child: Divider(
-                    color: Colors.black,
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text("or login with"),
-                ),
-                Expanded(
-                  child: Divider(
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/home');
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                minimumSize: const Size(30, 50),
-              ),
-              child: SvgPicture.string(
-                svgString,
-                width: 30,
-                height: 50,
-              ),
-            ),
+            // const SizedBox(height: 5),
+            // const Row(
+            //   children: <Widget>[
+            //     Expanded(
+            //       child: Divider(
+            //         color: Colors.black,
+            //       ),
+            //     ),
+            //     Padding(
+            //       padding: EdgeInsets.symmetric(horizontal: 10.0),
+            //       child: Text("or login with"),
+            //     ),
+            //     Expanded(
+            //       child: Divider(
+            //         color: Colors.black,
+            //       ),
+            //     ),
+            //   ],
+            // ),
+            // const SizedBox(height: 10),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     Navigator.pushNamed(context, '/home');
+            //   },
+            //   style: ElevatedButton.styleFrom(
+            //     shape: RoundedRectangleBorder(
+            //       borderRadius: BorderRadius.circular(12),
+            //     ),
+            //     minimumSize: const Size(30, 50),
+            //   ),
+            //   child: SvgPicture.string(
+            //     svgString,
+            //     width: 30,
+            //     height: 50,
+            //   ),
+            // ),
           ],
         ),
       ),

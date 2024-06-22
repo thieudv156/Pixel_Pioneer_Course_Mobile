@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:course_template/screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -52,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         List<dynamic> subscriptionDetails = jsonDecode(response.body);
         _showSubscriptionDialog(subscriptionDetails);
       } else {
-        _showErrorDialog("Failed to fetch subscription details");
+        _showErrorDialog("You might have not purchased a plan.");
       }
     } catch (e) {
       _showErrorDialog("Error fetching subscription details: $e");
@@ -152,7 +153,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               const CircleAvatar(
                 radius: 50,
-                backgroundImage: AssetImage('assets/profile.jpg'),
+                backgroundImage: NetworkImage(
+                    'https://cdn-icons-png.flaticon.com/512/9990/9990371.png'),
               ),
               const SizedBox(height: 8),
               Text(

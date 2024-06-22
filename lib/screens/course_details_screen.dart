@@ -7,7 +7,8 @@ import 'package:course_template/models/courseFull.dart';
 import 'package:course_template/models/course.dart' as course_models;
 import 'package:http/http.dart' as http;
 import 'package:course_template/utils/PublicBaseURL.dart';
-import 'package:course_template/models/review.dart'; // Import the Review model
+import 'package:course_template/models/review.dart';
+import 'package:course_template/models/progress.dart';
 
 class CourseDetailsScreen extends StatefulWidget {
   final course_models.Course course;
@@ -23,6 +24,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   Course? fullCourse;
   double averageRating = 0.0;
   List<Review> reviews = [];
+  List<Progress> progresses = [];
+  bool hasProgress = false;
   TextEditingController _commentController = TextEditingController();
   int _rating = 0;
   bool _isSubmitting = false;
@@ -39,6 +42,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     _fetchFullCourseDetails();
     _checkIfFavorite();
     _fetchReviews();
+    _checkAndCreateProgress();
   }
 
   Future<void> _checkIfFavorite() async {
@@ -233,6 +237,25 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     return prefs.getInt('userId') ?? 0;
   }
 
+  Future<void> _checkAndCreateProgress() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int userId = prefs.getInt('userId') ?? 0;
+
+    final response = await http.get(
+      Uri.parse(
+          '$baseUrl/api/progress/check-and-create-missing-progress?courseId=${widget.course.id}&userId=$userId'),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = jsonDecode(response.body);
+      setState(() {
+        progresses =
+            jsonResponse.map((json) => Progress.fromJson(json)).toList();
+        hasProgress = progresses.isNotEmpty;
+      });
+    }
+  }
+
   List<Review> get _paginatedReviews {
     final startIndex = (_currentPage - 1) * _reviewsPerPage;
     final endIndex = startIndex + _reviewsPerPage;
@@ -289,32 +312,47 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...fullCourse!.lessons
-                    .map((lesson) => ExpansionTile(
-                          title: Text('${lesson.orderNumber}. ${lesson.title}'),
-                          children: lesson.subLessons
-                              .map((subLesson) => ListTile(
-                                    leading:
-                                        const Icon(Icons.play_circle_outline),
-                                    title: Text(subLesson.title),
-                                    trailing:
-                                        Text('${subLesson.orderNumber} Min'),
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SubLessonContentScreen(
-                                                  subLesson: subLesson,
-                                                  instructorName: widget
-                                                      .course.instructorName),
-                                        ),
-                                      );
-                                    },
-                                  ))
-                              .toList(),
-                        ))
-                    .toList(),
+                if (!hasProgress)
+                  ElevatedButton(
+                    onPressed: _checkAndCreateProgress,
+                    child: Text('Start Learning'),
+                  ),
+                if (hasProgress)
+                  ...fullCourse!.lessons
+                      .map((lesson) => ExpansionTile(
+                            title:
+                                Text('${lesson.orderNumber}. ${lesson.title}'),
+                            children: lesson.subLessons.map((subLesson) {
+                              bool isCompleted = progresses.any((p) =>
+                                  p.subLesson.id == subLesson.id &&
+                                  p.isCompleted);
+
+                              return ListTile(
+                                leading: Icon(isCompleted
+                                    ? Icons.check_circle
+                                    : Icons.circle),
+                                title: Text(subLesson.title),
+                                onTap: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SubLessonContentScreen(
+                                        subLesson: subLesson,
+                                        instructorName:
+                                            widget.course.instructorName,
+                                        courseId: widget.course.id,
+                                      ),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    _checkAndCreateProgress();
+                                  }
+                                },
+                              );
+                            }).toList(),
+                          ))
+                      .toList(),
                 const Divider(),
                 const SizedBox(height: 16),
                 const Text(

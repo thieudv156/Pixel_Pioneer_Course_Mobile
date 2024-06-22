@@ -126,7 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             children: [
               const CircleAvatar(
-                backgroundImage: AssetImage('assets/profile.jpg'),
+                backgroundImage: NetworkImage(
+                    'https://cdn-icons-png.flaticon.com/512/9990/9990371.png'),
                 radius: 20,
               ),
               const SizedBox(width: 12),
