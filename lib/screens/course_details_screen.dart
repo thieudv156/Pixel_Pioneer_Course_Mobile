@@ -266,9 +266,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Course Details'),
-      ),
+
       body: fullCourse == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(

@@ -188,7 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               ProfileOption(
                 icon: Icons.payment,
-                text: 'My Payment',
+                text: 'My Enrollment',
                 onTap: () {
                   Navigator.push(
                     context,

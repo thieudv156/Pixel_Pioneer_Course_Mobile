@@ -1,111 +1,76 @@
-import 'package:course_template/screens/select_payment_method_screen.dart';
+import 'package:course_template/utils/PublicBaseURL.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class PaymentDetailScreen extends StatelessWidget {
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../utils/date_utils.dart';
+
+class PaymentDetailScreen extends StatefulWidget {
+  @override
+  _PaymentDetailScreenState createState() => _PaymentDetailScreenState();
+}
+
+class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
+  List<dynamic> _enrollments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchEnrollments();
+  }
+
+  Future<void> _fetchEnrollments() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? userId = prefs.getInt('userId');
+    if (userId != null) {
+      final response =
+          await http.get(Uri.parse('$baseUrl/api/enrollments/user/$userId'));
+      if (response.statusCode == 200) {
+        setState(() {
+          _enrollments = jsonDecode(response.body);
+        });
+      } else {
+        // Handle error
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.purple[100],
+      // Set background color to light purple
       appBar: AppBar(
         title: Text('Payment Detail'),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCourseDetailCard(),
-            SizedBox(height: 16),
-            _buildPaymentMethodCard(context),
-            SizedBox(height: 16),
-            _buildDiscountCodeCard(),
-            Spacer(),
-            // _buildTotalPaymentSection(),
-            SizedBox(height: 16),
-            // _buildPaymentButton(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCourseDetailCard() {
-    return Card(
-      child: ListTile(
-        leading: Image.asset('assets/course1.jpg', width: 50, height: 50),
-        title: Text('Learn UI - UX for Beginners'),
-        subtitle: Text('\$250'),
+      body: ListView.builder(
+        itemCount: _enrollments.length,
+        itemBuilder: (context, index) {
+          String? paymentDate = formatDate(_enrollments[index]['paymentDate']);
+          String? paymentMethod = _enrollments[index]['paymentMethod'];
+          String? subscriptionType = _enrollments[index]['subscriptionType'];
+          String? subscriptionEndDate =
+              formatDate(_enrollments[index]['subscriptionEndDate']);
+          return Card(
+            margin: EdgeInsets.all(8.0),
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Payment Date: ${paymentDate ?? 'Unknown'}'),
+                  Text('Payment Method: ${paymentMethod ?? 'Unknown'}'),
+                  Text('Subscription Type: ${subscriptionType ?? 'Unknown'}'),
+                  Text(
+                      'Subscription End Date: ${subscriptionEndDate ?? 'Unknown'}'),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
-
-  Widget _buildPaymentMethodCard(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: Text('Payment Method'),
-        subtitle: Text('**** **** **** 5566'),
-        trailing: TextButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SelectPaymentMethodScreen()),
-            );
-          },
-          child: Text('Change'),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDiscountCodeCard() {
-    return Card(
-      child: ListTile(
-        title: Text('Discount Code'),
-        subtitle: TextField(
-          decoration: InputDecoration(
-            hintText: 'Enter discount code',
-            border: InputBorder.none,
-          ),
-        ),
-        trailing: TextButton(
-          onPressed: () {},
-          child: Text('Apply Code'),
-        ),
-      ),
-    );
-  }
-
-  // Widget _buildTotalPaymentSection() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Text('Subtotal: \$250'),
-  //       Text('Discount: -\$2.32'),
-  //       Divider(),
-  //       Text(
-  //         'Total Payment: \$200.23',
-  //         style: TextStyle(fontWeight: FontWeight.bold),
-  //       ),
-  //     ],
-  //   );
-  // }
-
-  // Widget _buildPaymentButton() {
-  //   return SizedBox(
-  //     width: double.infinity,
-  //     child: ElevatedButton(
-  //       onPressed: () {},
-  //       child: Text('Payment'),
-  //     ),
-  //   );
-  // }
 }
-
-
-
-
-
-
