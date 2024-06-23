@@ -306,7 +306,7 @@ class _HomePageState extends State<HomePage> {
           }),
           _buildCategories(context),
           const SizedBox(height: 16),
-          _buildPaymentButton(context),
+          // _buildPaymentButton(context),
         ],
       ),
     );
@@ -538,23 +538,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPaymentButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.pushNamed(context, '/enrollment');
-      },
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.purple,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 15),
-      ),
-      child: const Text(
-        'Proceed to Payment',
-        style: TextStyle(fontSize: 16),
-      ),
-    );
-  }
+  // Widget _buildPaymentButton(BuildContext context) {
+  //   return ElevatedButton(
+  //     onPressed: () {
+  //       Navigator.pushNamed(context, '/enrollment');
+  //     },
+  //     style: ElevatedButton.styleFrom(
+  //       foregroundColor: Colors.white,
+  //       backgroundColor: Colors.purple,
+  //       shape: RoundedRectangleBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //       ),
+  //       padding: const EdgeInsets.symmetric(vertical: 15),
+  //     ),
+  //     child: const Text(
+  //       'Proceed to Payment',
+  //       style: TextStyle(fontSize: 16),
+  //     ),
+  //   );
+  // }
 }

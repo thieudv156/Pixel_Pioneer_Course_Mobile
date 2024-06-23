@@ -23,9 +23,9 @@ class PaymentDetailScreen extends StatelessWidget {
             SizedBox(height: 16),
             _buildDiscountCodeCard(),
             Spacer(),
-            _buildTotalPaymentSection(),
+            // _buildTotalPaymentSection(),
             SizedBox(height: 16),
-            _buildPaymentButton(),
+            // _buildPaymentButton(),
           ],
         ),
       ),
@@ -78,30 +78,30 @@ class PaymentDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTotalPaymentSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Subtotal: \$250'),
-        Text('Discount: -\$2.32'),
-        Divider(),
-        Text(
-          'Total Payment: \$200.23',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
+  // Widget _buildTotalPaymentSection() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text('Subtotal: \$250'),
+  //       Text('Discount: -\$2.32'),
+  //       Divider(),
+  //       Text(
+  //         'Total Payment: \$200.23',
+  //         style: TextStyle(fontWeight: FontWeight.bold),
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  Widget _buildPaymentButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {},
-        child: Text('Payment'),
-      ),
-    );
-  }
+  // Widget _buildPaymentButton() {
+  //   return SizedBox(
+  //     width: double.infinity,
+  //     child: ElevatedButton(
+  //       onPressed: () {},
+  //       child: Text('Payment'),
+  //     ),
+  //   );
+  // }
 }
 
 
