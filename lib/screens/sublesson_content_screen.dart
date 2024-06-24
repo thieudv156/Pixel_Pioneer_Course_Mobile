@@ -368,9 +368,9 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
       floatingActionButton: !isCompleted
           ? FloatingActionButton(
               onPressed: _markAsComplete,
-              child: Text('Finish'),
+              child: const Text('Finish'),
             )
-          : null,
+          : const Text('You have finished this lesson.'),
     );
   }
 }

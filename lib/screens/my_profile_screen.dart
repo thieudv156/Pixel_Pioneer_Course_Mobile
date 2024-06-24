@@ -51,7 +51,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
           _showErrorDialog('Failed to load user data');
         }
       } catch (e) {
-        _showErrorDialog('An error occurred while fetching user data');
+        _showSuccessDialog(
+            'Update your information today for more benefits from us!');
       }
     } else {
       _showErrorDialog('User ID not found');

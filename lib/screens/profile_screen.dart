@@ -53,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         List<dynamic> subscriptionDetails = jsonDecode(response.body);
         _showSubscriptionDialog(subscriptionDetails);
       } else {
-        _showErrorDialog("You might have not purchased a plan.");
+        _showSuccessDialog("You might have not purchased a plan.");
       }
     } catch (e) {
       _showErrorDialog("Error fetching subscription details: $e");
@@ -105,6 +105,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Message'),
           content: Text(message),
           actions: [
             TextButton(

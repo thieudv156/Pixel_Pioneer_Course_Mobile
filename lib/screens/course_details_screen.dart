@@ -21,6 +21,7 @@ class CourseDetailsScreen extends StatefulWidget {
 
 class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   bool isFavorite = false;
+  bool isEnrolled = false;
   Course? fullCourse;
   double averageRating = 0.0;
   List<Review> reviews = [];
@@ -42,7 +43,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     _fetchFullCourseDetails();
     _checkIfFavorite();
     _fetchReviews();
-    _checkAndCreateProgress();
+    _checkEnrollmentStatus();
   }
 
   Future<void> _checkIfFavorite() async {
@@ -54,6 +55,33 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         var storedCourse = jsonDecode(courseJson);
         return storedCourse['id'] == widget.course.id;
       });
+    });
+  }
+
+  Future<void> _checkEnrollmentStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final responseEnrollment = await http.get(
+      Uri.parse('$baseUrl/api/enrollments/check-enrollments').replace(
+        queryParameters: <String, String>{
+          'userId': prefs.getInt("userId").toString(),
+        },
+      ),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+    if (responseEnrollment.headers['content-type'] != null &&
+        responseEnrollment.headers['content-type']!
+            .contains('application/json')) {
+      final enrollmentState = jsonDecode(responseEnrollment.body);
+      if (responseEnrollment.statusCode == 200 || enrollmentState == true) {
+        prefs.setBool("isEnrolled", true);
+      } else {
+        prefs.setBool("isEnrolled", false);
+      }
+    }
+    setState(() {
+      isEnrolled = prefs.getBool('isEnrolled') ?? false;
     });
   }
 
@@ -266,7 +294,6 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: fullCourse == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -310,47 +337,78 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (!hasProgress)
-                  ElevatedButton(
-                    onPressed: _checkAndCreateProgress,
-                    child: Text('Start Learning'),
+                if (!isEnrolled)
+                  const Text(
+                    'Please purchase a plan to access this course lessons, thank you.',
+                    style: TextStyle(color: Colors.red, fontSize: 16),
                   ),
-                if (hasProgress)
-                  ...fullCourse!.lessons
-                      .map((lesson) => ExpansionTile(
-                            title:
-                                Text('${lesson.orderNumber}. ${lesson.title}'),
-                            children: lesson.subLessons.map((subLesson) {
-                              bool isCompleted = progresses.any((p) =>
-                                  p.subLesson.id == subLesson.id &&
-                                  p.isCompleted);
-
-                              return ListTile(
-                                leading: Icon(isCompleted
-                                    ? Icons.check_circle
-                                    : Icons.circle),
-                                title: Text(subLesson.title),
-                                onTap: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          SubLessonContentScreen(
-                                        subLesson: subLesson,
-                                        instructorName:
-                                            widget.course.instructorName,
-                                        courseId: widget.course.id,
-                                      ),
+                if (isEnrolled) ...[
+                  if (!hasProgress)
+                    ...fullCourse!.lessons.map((lesson) => ExpansionTile(
+                          title: Text('${lesson.orderNumber}. ${lesson.title}'),
+                          children: lesson.subLessons.map((subLesson) {
+                            bool isCompleted = progresses.any((p) =>
+                                p.subLesson.id == subLesson.id &&
+                                p.isCompleted);
+                            log(isCompleted.toString());
+                            return ListTile(
+                              leading: Icon(isCompleted
+                                  ? Icons.check_circle
+                                  : Icons.circle),
+                              title: Text(subLesson.title),
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        SubLessonContentScreen(
+                                      subLesson: subLesson,
+                                      instructorName:
+                                          widget.course.instructorName,
+                                      courseId: widget.course.id,
                                     ),
-                                  );
-                                  if (result == true) {
-                                    _checkAndCreateProgress();
-                                  }
-                                },
-                              );
-                            }).toList(),
-                          ))
-                      .toList(),
+                                  ),
+                                );
+                              },
+                            );
+                          }).toList(),
+                        )),
+                  if (hasProgress)
+                    ...fullCourse!.lessons
+                        .map((lesson) => ExpansionTile(
+                              title: Text(
+                                  '${lesson.orderNumber}. ${lesson.title}'),
+                              children: lesson.subLessons.map((subLesson) {
+                                bool isCompleted = progresses.any((p) =>
+                                    p.subLesson.id == subLesson.id &&
+                                    p.isCompleted);
+                                return ListTile(
+                                  leading: Icon(isCompleted
+                                      ? Icons.check_circle
+                                      : Icons.circle),
+                                  title: Text(subLesson.title),
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SubLessonContentScreen(
+                                          subLesson: subLesson,
+                                          instructorName:
+                                              widget.course.instructorName,
+                                          courseId: widget.course.id,
+                                        ),
+                                      ),
+                                    );
+                                    if (result == true) {
+                                      _checkAndCreateProgress();
+                                    }
+                                  },
+                                );
+                              }).toList(),
+                            ))
+                        .toList(),
+                ],
                 const Divider(),
                 const SizedBox(height: 16),
                 const Text(
@@ -491,7 +549,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "${review.user.fullName}",
+                                review.user.fullName,
                                 style:
                                     const TextStyle(color: Colors.blueAccent),
                               ),
