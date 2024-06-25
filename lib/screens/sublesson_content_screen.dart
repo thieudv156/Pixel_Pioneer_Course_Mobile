@@ -371,6 +371,7 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
               child: const Text('Finish'),
             )
           : const Text('You have finished this lesson.'),
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
     );
   }
 }

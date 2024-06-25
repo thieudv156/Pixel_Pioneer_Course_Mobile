@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:course_template/models/sublesson.dart';
 import 'package:course_template/screens/sublesson_content_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,7 +26,6 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   Course? fullCourse;
   double averageRating = 0.0;
   List<Review> reviews = [];
-  List<Progress> progresses = [];
   bool hasProgress = false;
   TextEditingController _commentController = TextEditingController();
   int _rating = 0;
@@ -41,9 +41,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   void initState() {
     super.initState();
     _fetchFullCourseDetails();
-    _checkIfFavorite();
     _fetchReviews();
     _checkEnrollmentStatus();
+    _checkOrCreateProgress();
   }
 
   Future<void> _checkIfFavorite() async {
@@ -265,21 +265,20 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     return prefs.getInt('userId') ?? 0;
   }
 
-  Future<void> _checkAndCreateProgress() async {
+  Future<void> _checkOrCreateProgress() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int userId = prefs.getInt('userId') ?? 0;
 
     final response = await http.get(
       Uri.parse(
-          '$baseUrl/api/progress/check-and-create-missing-progress?courseId=${widget.course.id}&userId=$userId'),
+          '$baseUrl/api/progress/check-or-create-progress?courseId=${widget.course.id}&userId=$userId'),
     );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonResponse = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      log(response.body);
+    } else if (response.statusCode == 200) {
       setState(() {
-        progresses =
-            jsonResponse.map((json) => Progress.fromJson(json)).toList();
-        hasProgress = progresses.isNotEmpty;
+        hasProgress = true;
       });
     }
   }
@@ -343,71 +342,28 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                     style: TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 if (isEnrolled) ...[
-                  if (!hasProgress)
-                    ...fullCourse!.lessons.map((lesson) => ExpansionTile(
-                          title: Text('${lesson.orderNumber}. ${lesson.title}'),
-                          children: lesson.subLessons.map((subLesson) {
-                            bool isCompleted = progresses.any((p) =>
-                                p.subLesson.id == subLesson.id &&
-                                p.isCompleted);
-                            log(isCompleted.toString());
-                            return ListTile(
-                              leading: Icon(isCompleted
-                                  ? Icons.check_circle
-                                  : Icons.circle),
-                              title: Text(subLesson.title),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        SubLessonContentScreen(
-                                      subLesson: subLesson,
-                                      instructorName:
-                                          widget.course.instructorName,
-                                      courseId: widget.course.id,
-                                    ),
+                  ...fullCourse!.lessons.map((lesson) => ExpansionTile(
+                        title: Text('${lesson.orderNumber}. ${lesson.title}'),
+                        children: lesson.subLessons.map((subLesson) {
+                          return ListTile(
+                            leading: const Icon(Icons.pending_rounded),
+                            title: Text(subLesson.title),
+                            onTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SubLessonContentScreen(
+                                    subLesson: subLesson,
+                                    instructorName:
+                                        widget.course.instructorName,
+                                    courseId: widget.course.id,
                                   ),
-                                );
-                              },
-                            );
-                          }).toList(),
-                        )),
-                  if (hasProgress)
-                    ...fullCourse!.lessons
-                        .map((lesson) => ExpansionTile(
-                              title: Text(
-                                  '${lesson.orderNumber}. ${lesson.title}'),
-                              children: lesson.subLessons.map((subLesson) {
-                                bool isCompleted = progresses.any((p) =>
-                                    p.subLesson.id == subLesson.id &&
-                                    p.isCompleted);
-                                return ListTile(
-                                  leading: Icon(isCompleted
-                                      ? Icons.check_circle
-                                      : Icons.circle),
-                                  title: Text(subLesson.title),
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SubLessonContentScreen(
-                                          subLesson: subLesson,
-                                          instructorName:
-                                              widget.course.instructorName,
-                                          courseId: widget.course.id,
-                                        ),
-                                      ),
-                                    );
-                                    if (result == true) {
-                                      _checkAndCreateProgress();
-                                    }
-                                  },
-                                );
-                              }).toList(),
-                            ))
-                        .toList(),
+                                ),
+                              );
+                            },
+                          );
+                        }).toList(),
+                      )),
                 ],
                 const Divider(),
                 const SizedBox(height: 16),

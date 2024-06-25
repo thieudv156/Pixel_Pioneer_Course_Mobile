@@ -292,7 +292,12 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
           ],
           _buildSectionHeader('Courses You May Like', onTap: () {
-            // Handle "See more" action
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CategoryListScreen(),
+              ),
+            );
           }),
           _buildTodaySessions(context),
           const SizedBox(height: 16),

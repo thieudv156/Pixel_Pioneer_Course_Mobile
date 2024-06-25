@@ -65,7 +65,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       _showAlertDialog('Success', 'Password has been reset successfully.');
       Navigator.pushReplacementNamed(context, '/');
     } else {
-      _showAlertDialog('Error', response.body);
+      _showAlertDialog('Message', "Please re-login to your account");
     }
   }
 

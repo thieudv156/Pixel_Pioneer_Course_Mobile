@@ -32,7 +32,8 @@ Future<void> _createAccount(String username, String fullname, String email,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Registration Failed'),
-          content: Text(response.body),
+          content:
+              const Text("Your information may have existed in our system."),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
