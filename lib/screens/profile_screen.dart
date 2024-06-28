@@ -51,7 +51,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (response.statusCode == 200) {
         List<dynamic> subscriptionDetails = jsonDecode(response.body);
-        _showSubscriptionDialog(subscriptionDetails);
+
+        // Process the details to format validity and subscription state
+        List<Map<String, dynamic>> processedDetails =
+            subscriptionDetails.map((detail) {
+          Map<String, dynamic> detailMap = detail as Map<String, dynamic>;
+          return detailMap;
+        }).toList();
+
+        _showSubscriptionDialog(processedDetails);
       } else {
         _showSuccessDialog("You might have not purchased a plan.");
       }
@@ -68,23 +76,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Subscription Details'),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: uniqueDetails.map((detail) {
-              Map<String, dynamic> detailMap = detail as Map<String, dynamic>;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("User: ${detailMap['user_name']}"),
-                  Text(
-                      "Subscription Status: ${detailMap['subscription_state']}"),
-                  Text("Package: ${detailMap['subscription_package_name']}"),
-                  Text("Validity: ${detailMap['validity']}"),
-                  const Divider(), // Optional: Divider between items
-                ],
-              );
-            }).toList(),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: uniqueDetails
+                  .map((detail) {
+                    Map<String, dynamic> detailMap =
+                        detail as Map<String, dynamic>;
+
+                    // Filter out null details
+                    List<Widget> detailsWidgets = [];
+                    if (detailMap['user_name'] != null) {
+                      detailsWidgets
+                          .add(Text("User: ${detailMap['user_name']}"));
+                    }
+                    if (detailMap['subscription_state'] != null) {
+                      bool isActive = detailMap['subscription_state'] == 'true';
+                      detailsWidgets.add(Text(
+                          "Subscription Status: ${isActive ? 'Activated' : 'Deactivated'}"));
+                    }
+                    if (detailMap['subscription_package_name'] != null) {
+                      detailsWidgets.add(Text(
+                          "Package: ${detailMap['subscription_package_name']}"));
+                    }
+                    if (detailMap['validity'] != null) {
+                      try {
+                        detailsWidgets.add(Text(
+                            "Validity: ${detailMap['validity']} days left"));
+                      } catch (e) {
+                        detailsWidgets.add(Text("Validity: Invalid format"));
+                      }
+                    }
+                    detailsWidgets.add(const Divider());
+
+                    // Check if the detailsWidgets is empty after filtering
+                    if (detailsWidgets.length <= 1) {
+                      // Only Divider was added
+                      return Container();
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: detailsWidgets,
+                    );
+                  })
+                  .where((widget) => widget is! Container)
+                  .toList(), // Filter out empty containers
+            ),
           ),
           actions: [
             TextButton(

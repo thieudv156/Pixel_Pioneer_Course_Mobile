@@ -22,7 +22,7 @@ class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/':
-        return MaterialPageRoute(builder: (_) => SplashScreen());
+        return MaterialPageRoute(builder: (_) => const SplashScreen());
       case '/login':
         return MaterialPageRoute(builder: (_) => const LoginScreen());
       case '/home':
@@ -36,8 +36,8 @@ class Routes {
       case '/mentor-details':
         return MaterialPageRoute(
             builder: (_) => const MentorDetailsScreen(
-              mentorName: '',
-            ));
+                  mentorName: '',
+                ));
       case '/course-details':
         final course = settings.arguments as Course;
         return MaterialPageRoute(

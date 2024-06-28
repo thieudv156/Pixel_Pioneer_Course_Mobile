@@ -60,6 +60,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
 
   Future<void> _checkEnrollmentStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userFullName = prefs.getString("userFullname").toString();
     final responseEnrollment = await http.get(
       Uri.parse('$baseUrl/api/enrollments/check-enrollments').replace(
         queryParameters: <String, String>{
@@ -78,6 +79,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         prefs.setBool("isEnrolled", true);
       } else {
         prefs.setBool("isEnrolled", false);
+      }
+      if (widget.course.instructorName == userFullName) {
+        prefs.setBool("isEnrolled", true);
       }
     }
     setState(() {
