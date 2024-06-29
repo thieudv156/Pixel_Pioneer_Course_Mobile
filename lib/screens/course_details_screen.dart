@@ -192,6 +192,28 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
           _isSubmitting = false;
         });
         _fetchReviews();
+      } else if (response.statusCode == 406) {
+        // Not Acceptable status code for bad words
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Bad Words Detected'),
+              content: Text('Please refrain from using offensive language.'),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+        setState(() {
+          _isSubmitting = false;
+        });
       } else {
         log('Failed to submit review: ${response.statusCode}');
         setState(() {
@@ -234,6 +256,28 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
           _isSubmitting = false;
         });
         _fetchReviews();
+      } else if (response.statusCode == 406) {
+        // Not Acceptable status code for bad words
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Bad Words Detected'),
+              content: Text('Please refrain from using offensive language.'),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+        setState(() {
+          _isSubmitting = false;
+        });
       } else {
         log('Failed to edit review: ${response.statusCode}');
         setState(() {

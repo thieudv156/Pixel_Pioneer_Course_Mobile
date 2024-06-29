@@ -32,8 +32,8 @@ Future<void> _createAccount(String username, String fullname, String email,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Registration Failed'),
-          content:
-              const Text("Your information may have existed in our system."),
+          content: const Text(
+              "Your information may have existed in our system, or you have entered wrong information. Try a new one (email,phone,username)"),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
@@ -78,6 +78,7 @@ class _SignupScreenState extends State<SignupScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const SizedBox(height: 100),
             const Text(
               'Create a New Account',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),

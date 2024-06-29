@@ -96,6 +96,25 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
           replyingToName = null;
         });
         _loadDiscussions();
+      } else if (response.statusCode == 406) {
+        // Not Acceptable status code for bad words
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Bad Words Detected'),
+              content: Text('Please refrain from using offensive language.'),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
       } else {
         log('Failed to post comment');
       }
@@ -103,7 +122,6 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
   }
 
   Future<void> _editComment(Discussion discussion) async {
-    log(discussion.editedContent.toString());
     final response = await http.put(
       Uri.parse('$baseUrl/api/discussions/${discussion.id}'), // Use baseUrl
       headers: {
@@ -122,6 +140,25 @@ class _SubLessonContentScreenState extends State<SubLessonContentScreen> {
         discussion.editedAt = DateTime.now();
       });
       _loadDiscussions();
+    } else if (response.statusCode == 406) {
+      // Not Acceptable status code for bad words
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Bad Words Detected'),
+            content: Text('Please refrain from using offensive language.'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     } else {
       log('Failed to edit comment: ${response.body}');
     }
